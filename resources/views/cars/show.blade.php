@@ -28,8 +28,8 @@
                     <div>
                         <h1 class="text-3xl font-bold mb-2">{{ $car->title }}</h1>
                         <div class="flex items-center text-gray-600 space-x-4">
-                            <span>📍 {{ $car->city->name }}</span>
-                            <span>👁️ {{ number_format($car->views) }} views</span>
+                            <span>{{ $car->city->name }}</span>
+                            <span> {{ number_format($car->views) }} views</span>
                         </div>
                     </div>
                     <button onclick="toggleFavorite({{ $car->id }})" class="text-red-500 hover:text-red-600 text-2xl">

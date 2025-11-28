@@ -1,0 +1,144 @@
+:root {
+            --primary-color: #f4883b;
+            --secondary-color: #1A1A1A;
+            --text-color: #333;
+            --bg-light: #F8F9FA;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-color);
+        }
+        
+        .navbar-brand {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color) !important;
+        }
+        
+        .navbar-nav .nav-link {
+            font-weight: 500;
+            color: var(--text-color) !important;
+            margin: 0 8px;
+            transition: color 0.3s;
+        }
+        
+        .navbar-nav .nav-link:hover {
+            color: var(--primary-color) !important;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #C41A1F;
+            border-color: #C41A1F;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 8px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .card-img-top {
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .price-tag {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .make-logo {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            margin: 0 auto;
+        }
+        
+        .city-card {
+            text-align: center;
+            padding: 20px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .city-card:hover {
+            background-color: var(--bg-light);
+            transform: translateY(-3px);
+        }
+        
+        footer {
+            background-color: var(--secondary-color);
+        }
+        
+        .hero-banner {
+            background: url(../images/banner2.jpg);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+           
+
+        }
+        
+        /* Car Listing Page Styles */
+        .car-listing-card {
+            transition: all 0.3s ease;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .car-listing-card:hover {
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+            transform: translateY(-2px);
+        }
+        
+        .car-listing-image {
+            transition: transform 0.3s ease;
+        }
+        
+        .car-listing-card:hover .car-listing-image {
+            transform: scale(1.05);
+        }
+        
+        .sticky-top {
+            z-index: 1020;
+        }
+        
+        .breadcrumb {
+            background-color: transparent;
+            padding: 0;
+        }
+        
+        .breadcrumb-item a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .breadcrumb-item.active {
+            color: var(--text-color);
+        }
+        
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .pagination .page-link {
+            color: var(--primary-color);
+        }
+        
+        .pagination .page-item.active .page-link {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }

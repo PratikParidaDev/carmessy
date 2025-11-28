@@ -27,9 +27,18 @@ class HomeController extends Controller
             ->take(6)
             ->get();
 
+        $usedCars = Car::approved()
+            ->published()
+            ->where('condition', 'used')
+            ->with(['make', 'model', 'city'])
+            ->latest('published_at')
+            ->take(6)
+            ->get();
+
         $popularMakes = Make::where('is_popular', true)
             ->where('is_active', true)
             ->orderBy('order')
+            ->withCount('cars')
             ->get();
 
         $popularCities = City::where('is_popular', true)
@@ -40,6 +49,7 @@ class HomeController extends Controller
         return view('home', compact(
             'featuredCars',
             'newCars',
+            'usedCars',
             'popularMakes',
             'popularCities'
         ));

@@ -1,119 +1,303 @@
 @extends('layouts.app')
 
-@section('content')
-<div class="relative bg-gradient-to-r from-blue-600 to-blue-800 text-white py-20">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center">
-            <h1 class="text-4xl md:text-5xl font-bold mb-4">
-                Find Your Dream Car Today
-            </h1>
-            <p class="text-xl mb-8">
-                Browse thousands of new and used cars from trusted dealers
-            </p>
-
-            <!-- Search Form -->
-            <form action="{{ route('cars.index') }}" method="GET" class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
-                        <select name="make_id" class="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 focus:ring-2 focus:ring-blue-500">
-                            <option value="">All Makes</option>
-                            @foreach($popularMakes as $make)
-                                <option value="{{ $make->id }}">{{ $make->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <select name="city_id" class="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 focus:ring-2 focus:ring-blue-500">
-                            <option value="">All Cities</option>
-                            @foreach($popularCities as $city)
-                                <option value="{{ $city->id }}">{{ $city->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <input type="number" name="max_price" placeholder="Max Price" class="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <button type="submit" class="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition">
-                            Search Cars
-                        </button>
+@section('banner')
+<!-- Hero Banner with Search -->
+<div class="hero-banner bg-primary text-white py-5" >
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <h1 class="display-4 fw-bold mb-3">Find Your Perfect Car</h1>
+                <p class="lead mb-4">Browse thousands of new and used cars from verified dealers across India</p>
+            </div>
+            <div class="col-lg-6">
+                <div class="card shadow-lg">
+                    <div class="card-body p-4">
+                        <h5 class="card-title mb-4">Search Cars</h5>
+                        <form action="{{ route('cars.index') }}" method="GET">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Make</label>
+                                    <select class="form-select" name="make_id">
+                                        <option value="">All Makes</option>
+                                        @foreach($popularMakes as $make)
+                                            <option value="{{ $make->id }}">{{ $make->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">City</label>
+                                    <select class="form-select" name="city_id">
+                                        <option value="">All Cities</option>
+                                        @foreach($popularCities as $city)
+                                            <option value="{{ $city->id }}">{{ $city->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Price Range</label>
+                                    <select class="form-select" name="max_price">
+                                        <option value="">Any Price</option>
+                                        <option value="500000">Under ₹5 Lakh</option>
+                                        <option value="1000000">Under ₹10 Lakh</option>
+                                        <option value="2000000">Under ₹20 Lakh</option>
+                                        <option value="5000000">Under ₹50 Lakh</option>
+                                        <option value="">Above ₹50 Lakh</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Condition</label>
+                                    <select class="form-select" name="condition">
+                                        <option value="">All</option>
+                                        <option value="new">New</option>
+                                        <option value="used">Used</option>
+                                        <option value="certified">Certified</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary w-100 btn-lg">
+                                        <i class="fas fa-search me-2"></i>Search Cars
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
+@endsection
+
+@section('content')
+<!-- Popular Car Makes -->
+@if($popularMakes->count() > 0)
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold">Popular Car Brands</h2>
+            <a href="{{ route('cars.index') }}" class="text-decoration-none">View All <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="row g-4">
+            @foreach($popularMakes->take(8) as $make)
+                <div class="col-6 col-md-3 col-lg-2">
+                    <a href="{{ route('cars.index', ['make_id' => $make->id]) }}" class="text-decoration-none text-dark">
+                        <div class="card h-100 text-center p-3 city-card">
+                            @if($make->logo)
+                                <img src="{{ asset('storage/' . $make->logo) }}" alt="{{ $make->name }}" class="make-logo mb-2">
+                            @else
+                                <div class="make-logo mb-2 d-flex align-items-center justify-content-center bg-light rounded">
+                                    <i class="fas fa-car fa-2x text-muted"></i>
+                                </div>
+                            @endif
+                            <h6 class="mb-0">{{ $make->name }}</h6>
+                            <small class="text-muted">{{ $make->cars_count ?? 0 }} cars</small>
+                        </div>
+                    </a>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</section>
+@endif
 
 <!-- Featured Cars -->
 @if($featuredCars->count() > 0)
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <h2 class="text-3xl font-bold mb-8">Featured Cars</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        @foreach($featuredCars as $car)
-            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition">
-                <div class="relative">
-                    @php
-                        $image = $car->getFirstMediaUrl('images');
-                    @endphp
-                    <img src="{{ $image ?: 'https://via.placeholder.com/400x300?text=No+Image' }}" alt="{{ $car->title }}" class="w-full h-48 object-cover">
-                    <div class="absolute top-2 right-2 bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-xs font-semibold">
-                        FEATURED
-                    </div>
-                </div>
-                <div class="p-4">
-                    <h3 class="font-semibold text-lg mb-2 truncate">{{ $car->title }}</h3>
-                    <p class="text-2xl font-bold text-blue-600 mb-2">{{ $car->getFormattedPrice() }}</p>
-                    <div class="flex items-center justify-between text-sm text-gray-600 mb-3">
-                        <span>{{ $car->year }}</span>
-                        <span>{{ number_format($car->mileage) }} km</span>
-                        <span>{{ ucfirst($car->fuel_type) }}</span>
-                    </div>
-                    <div class="text-sm text-gray-500 mb-3">
-                        <span>📍 {{ $car->city->name }}</span>
-                    </div>
-                    <a href="{{ route('cars.show', $car->slug) }}" class="block text-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition">
-                        View Details
-                    </a>
-                </div>
-            </div>
-        @endforeach
-    </div>
-</div>
-@endif
-
-<!-- New Cars -->
-@if($newCars->count() > 0)
-<div class="bg-gray-100 py-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-3xl font-bold mb-8">Latest New Cars</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            @foreach($newCars as $car)
-                <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition">
-                    <img src="{{ $car->getFirstMediaUrl('images') ?: 'https://via.placeholder.com/400x300' }}" alt="{{ $car->title }}" class="w-full h-48 object-cover">
-                    <div class="p-4">
-                        <h3 class="font-semibold text-lg mb-2">{{ $car->title }}</h3>
-                        <p class="text-2xl font-bold text-blue-600">{{ $car->getFormattedPrice() }}</p>
-                        <a href="{{ route('cars.show', $car->slug) }}" class="mt-4 block text-center border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-4 py-2 rounded-lg font-semibold transition">
-                            View Details
-                        </a>
+<section class="py-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold">Featured Cars</h2>
+            <a href="{{ route('cars.index', ['sort' => 'featured']) }}" class="text-decoration-none">View All <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="row g-4">
+            @foreach($featuredCars as $car)
+                <div class="col-md-6 col-lg-3">
+                    <div class="card h-100">
+                        @php
+                            $image = $car->getFirstMediaUrl('images') ?: 'https://via.placeholder.com/300x200?text=No+Image';
+                        @endphp
+                        <div class="position-relative">
+                            <img src="{{ $image }}" class="card-img-top" alt="{{ $car->title }}">
+                            @if($car->is_featured)
+                                <span class="badge bg-danger position-absolute top-0 start-0 m-2">Featured</span>
+                            @endif
+                            @if($car->is_verified)
+                                <span class="badge bg-success position-absolute top-0 end-0 m-2">
+                                    <i class="fas fa-check-circle"></i> Verified
+                                </span>
+                            @endif
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title mb-2">{{ $car->make->name }} {{ $car->model->name }}</h5>
+                            <p class="text-muted small mb-2">
+                                <i class="fas fa-calendar-alt"></i> {{ $car->year }} 
+                                <span class="mx-2">|</span>
+                                <i class="fas fa-tachometer-alt"></i> {{ number_format($car->mileage) }} km
+                            </p>
+                            <p class="text-muted small mb-2">
+                                <i class="fas fa-map-marker-alt"></i> {{ $car->city->name }}, {{ $car->city->state }}
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="price-tag">₹{{ number_format($car->price, 0) }}</span>
+                                <span class="badge bg-info">{{ ucfirst($car->condition) }}</span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="{{ route('cars.show', $car->slug) }}" class="btn btn-primary btn-sm flex-fill">
+                                    View Details
+                                </a>
+                                @auth
+                                    <form action="{{ route('favorites.store', $car->id) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            <i class="fas fa-heart"></i>
+                                        </button>
+                                    </form>
+                                @endauth
+                            </div>
+                        </div>
                     </div>
                 </div>
             @endforeach
         </div>
     </div>
-</div>
+</section>
 @endif
 
-<!-- Popular Makes -->
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <h2 class="text-3xl font-bold mb-8">Popular Brands</h2>
-    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-        @foreach($popularMakes as $make)
-            <a href="{{ route('cars.index', ['make_id' => $make->id]) }}" class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition text-center">
-                <div class="text-4xl mb-2">🚗</div>
-                <h3 class="font-semibold">{{ $make->name }}</h3>
-            </a>
-        @endforeach
+<!-- New Cars -->
+@if($newCars->count() > 0)
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold">New Cars</h2>
+            <a href="{{ route('cars.index', ['condition' => 'new']) }}" class="text-decoration-none">View All <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="row g-4">
+            @foreach($newCars as $car)
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100">
+                        @php
+                            $image = $car->getFirstMediaUrl('images') ?: 'https://via.placeholder.com/300x200?text=No+Image';
+                        @endphp
+                        <img src="{{ $image }}" class="card-img-top" alt="{{ $car->title }}">
+                        <div class="card-body">
+                            <h5 class="card-title mb-2">{{ $car->make->name }} {{ $car->model->name }}</h5>
+                            <p class="text-muted small mb-2">
+                                <i class="fas fa-calendar-alt"></i> {{ $car->year }}
+                                <span class="mx-2">|</span>
+                                <i class="fas fa-map-marker-alt"></i> {{ $car->city->name }}
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="price-tag">₹{{ number_format($car->price, 0) }}</span>
+                                <span class="badge bg-success">New</span>
+                            </div>
+                            <a href="{{ route('cars.show', $car->slug) }}" class="btn btn-primary btn-sm w-100">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
     </div>
-</div>
+</section>
+@endif
+
+<!-- Used Cars -->
+@if(isset($usedCars) && $usedCars->count() > 0)
+<section class="py-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold">Used Cars</h2>
+            <a href="{{ route('cars.index', ['condition' => 'used']) }}" class="text-decoration-none">View All <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="row g-4">
+            @foreach($usedCars as $car)
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100">
+                        @php
+                            $image = $car->getFirstMediaUrl('images') ?: 'https://via.placeholder.com/300x200?text=No+Image';
+                        @endphp
+                        <img src="{{ $image }}" class="card-img-top" alt="{{ $car->title }}">
+                        <div class="card-body">
+                            <h5 class="card-title mb-2">{{ $car->make->name }} {{ $car->model->name }}</h5>
+                            <p class="text-muted small mb-2">
+                                <i class="fas fa-calendar-alt"></i> {{ $car->year }}
+                                <span class="mx-2">|</span>
+                                <i class="fas fa-tachometer-alt"></i> {{ number_format($car->mileage) }} km
+                            </p>
+                            <p class="text-muted small mb-2">
+                                <i class="fas fa-map-marker-alt"></i> {{ $car->city->name }}
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="price-tag">₹{{ number_format($car->price, 0) }}</span>
+                                <span class="badge bg-warning text-dark">Used</span>
+                            </div>
+                            <a href="{{ route('cars.show', $car->slug) }}" class="btn btn-primary btn-sm w-100">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</section>
+@endif
+
+<!-- Popular Cities -->
+@if($popularCities->count() > 0)
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold">Popular Cities</h2>
+            <a href="{{ route('cars.index') }}" class="text-decoration-none">View All <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="row g-4">
+            @foreach($popularCities as $city)
+                <div class="col-6 col-md-4 col-lg-3">
+                    <a href="{{ route('cars.index', ['city_id' => $city->id]) }}" class="text-decoration-none text-dark">
+                        <div class="card city-card h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-map-marker-alt fa-3x text-primary mb-3"></i>
+                                <h5 class="mb-1">{{ $city->name }}</h5>
+                                <p class="text-muted small mb-0">{{ $city->state }}</p>
+                                <span class="badge bg-primary mt-2">{{ $city->cars_count ?? 0 }} cars</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</section>
+@endif
+
+<!-- Why Choose Us -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center fw-bold mb-5">Why Choose CarMarketplace?</h2>
+        <div class="row g-4">
+            <div class="col-md-4 text-center">
+                <div class="mb-3">
+                    <i class="fas fa-shield-alt fa-3x text-primary"></i>
+                </div>
+                <h5>Verified Listings</h5>
+                <p class="text-muted">All cars are verified by our team to ensure quality and authenticity.</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="mb-3">
+                    <i class="fas fa-users fa-3x text-primary"></i>
+                </div>
+                <h5>Trusted Dealers</h5>
+                <p class="text-muted">Connect with verified and trusted car dealers across India.</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="mb-3">
+                    <i class="fas fa-search fa-3x text-primary"></i>
+                </div>
+                <h5>Easy Search</h5>
+                <p class="text-muted">Find your perfect car with our advanced search and filter options.</p>
+            </div>
+        </div>
+    </div>
+</section>
 @endsection
