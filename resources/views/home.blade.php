@@ -201,37 +201,52 @@
 </section>
 @endif
 
-<!-- Used Cars -->
+<!-- Used Cars Section -->
 @if(isset($usedCars) && $usedCars->count() > 0)
-<section class="py-5">
+<section class="py-5" style="background: #fff;">
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="fw-bold">Used Cars</h2>
-            <a href="{{ route('cars.index', ['condition' => 'used']) }}" class="text-decoration-none">View All <i class="fas fa-arrow-right"></i></a>
+            <h2 class="fw-bold" style="font-size: 2rem; color: #333;">Used Cars</h2>
+            <a href="{{ route('cars.index', ['condition' => 'used']) }}" class="text-decoration-none fw-bold" style="color: #2271b1; font-size: 1rem;">
+                View All <i class="fas fa-arrow-right"></i>
+            </a>
         </div>
         <div class="row g-4">
             @foreach($usedCars as $car)
                 <div class="col-md-6 col-lg-4">
-                    <div class="card h-100">
+                    <div class="card h-100 shadow-sm" style="border: none; border-radius: 8px; overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease;" 
+                         onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.1)'"
+                         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)'">
                         @php
-                            $image = $car->getFirstMediaUrl('images') ?: 'https://via.placeholder.com/300x200?text=No+Image';
+                            $image = $car->getFirstMediaUrl('images') ?: 'https://via.placeholder.com/400x250?text=' . urlencode($car->title);
                         @endphp
-                        <img src="{{ $image }}" class="card-img-top" alt="{{ $car->title }}">
-                        <div class="card-body">
-                            <h5 class="card-title mb-2">{{ $car->make->name }} {{ $car->model->name }}</h5>
-                            <p class="text-muted small mb-2">
-                                <i class="fas fa-calendar-alt"></i> {{ $car->year }}
-                                <span class="mx-2">|</span>
-                                <i class="fas fa-tachometer-alt"></i> {{ number_format($car->mileage) }} km
-                            </p>
-                            <p class="text-muted small mb-2">
-                                <i class="fas fa-map-marker-alt"></i> {{ $car->city->name }}
-                            </p>
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="price-tag">₹{{ number_format($car->price, 0) }}</span>
-                                <span class="badge bg-warning text-dark">Used</span>
+                        <div style="position: relative; width: 100%; height: 200px; overflow: hidden; background: #f5f5f5;">
+                            <img src="{{ $image }}" 
+                                 alt="{{ $car->title }}" 
+                                 style="width: 100%; height: 100%; object-fit: cover;">
+                            <span class="badge" style="position: absolute; top: 10px; right: 10px; background: #ffc107; color: #000; padding: 5px 10px; font-weight: 600; border-radius: 4px;">
+                                Used
+                            </span>
+                        </div>
+                        <div class="card-body" style="padding: 20px;">
+                            <h5 class="card-title mb-3" style="font-size: 1.25rem; font-weight: 600; color: #333; margin-bottom: 10px;">
+                                {{ $car->make->name ?? 'N/A' }} {{ $car->model->name ?? 'N/A' }}
+                            </h5>
+                            <div class="mb-3" style="display: flex; flex-wrap: wrap; gap: 10px; color: #666; font-size: 0.9rem;">
+                                <span><i class="fas fa-calendar-alt" style="margin-right: 5px;"></i>{{ $car->year ?? 'N/A' }}</span>
+                                <span><i class="fas fa-tachometer-alt" style="margin-right: 5px;"></i>{{ $car->mileage ? number_format($car->mileage) . ' km' : 'N/A' }}</span>
+                                <span><i class="fas fa-map-marker-alt" style="margin-right: 5px;"></i>{{ $car->city->name ?? 'N/A' }}</span>
                             </div>
-                            <a href="{{ route('cars.show', $car->slug) }}" class="btn btn-primary btn-sm w-100">
+                            <div class="d-flex justify-content-between align-items-center mb-3" style="flex-wrap: wrap; gap: 10px;">
+                                <span style="font-size: 1.5rem; font-weight: 700; color: #ff6b35;">
+                                    ₹{{ number_format($car->price, 0) }}
+                                </span>
+                            </div>
+                            <a href="{{ route('cars.show', $car->slug) }}" 
+                               class="btn w-100" 
+                               style="background: #ff6b35; color: white; border: none; padding: 12px; font-weight: 600; border-radius: 6px; text-decoration: none; display: block; text-align: center; transition: background 0.3s ease;"
+                               onmouseover="this.style.background='#e55a2b'"
+                               onmouseout="this.style.background='#ff6b35'">
                                 View Details
                             </a>
                         </div>
