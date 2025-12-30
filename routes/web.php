@@ -15,6 +15,9 @@ use App\Http\Controllers\Dealer\{
     DashboardController as DealerDashboardController,
     CarController as DealerCarController
 };
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Api\CarStatusController;
 
 
 
@@ -22,14 +25,50 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Unified Dashboard Routes
+Route::prefix('dashboard')->middleware(['auth', 'verified'])->group(function () {
+    // Dashboard overview - accessible to all authenticated users
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // Profile route
+    Route::get('/profile', [DashboardController::class, 'profile'])->name('dashboard.profile');
+    
+    // CRUD routes - only for dealers and admins (permission checked in controller)
+    Route::get('/my-cars', [DashboardController::class, 'myCars'])->name('dashboard.my-cars');
+    Route::get('/cars/create', [DashboardController::class, 'createCar'])->name('dashboard.cars.create');
+    Route::post('/cars', [DashboardController::class, 'storeCar'])->name('dashboard.cars.store');
+    Route::get('/cars/{car:id}/edit', [DashboardController::class, 'editCar'])->name('dashboard.cars.edit');
+    Route::put('/cars/{car:id}', [DashboardController::class, 'updateCar'])->name('dashboard.cars.update');
+    Route::delete('/cars/{car:id}', [DashboardController::class, 'deleteCar'])->name('dashboard.cars.delete');
+});
+
+// Admin Routes - Only for admin role
+Route::prefix('admin')->middleware(['auth', 'verified', \App\Http\Middleware\AdminMiddleware::class])->name('admin.')->group(function () {
+    Route::get('/', [AdminController::class, 'index'])->name('dashboard');
+    
+    // User Management Routes
+    Route::get('/users', [AdminController::class, 'users'])->name('users');
+    Route::get('/users/create', [AdminController::class, 'createUser'])->name('users.create');
+    Route::post('/users', [AdminController::class, 'storeUser'])->name('users.store');
+    Route::get('/users/{user}/edit', [AdminController::class, 'editUser'])->name('users.edit');
+    Route::put('/users/{user}', [AdminController::class, 'updateUser'])->name('users.update');
+    Route::delete('/users/{user}', [AdminController::class, 'deleteUser'])->name('users.delete');
+    Route::get('/cars', [AdminController::class, 'cars'])->name('cars');
+    Route::post('/cars/{car}/approve', [AdminController::class, 'approveCar'])->name('cars.approve');
+    Route::post('/cars/{car}/reject', [AdminController::class, 'rejectCar'])->name('cars.reject');
+    Route::delete('/cars/{car}', [AdminController::class, 'deleteCar'])->name('cars.delete');
+    Route::post('/cars/bulk-approve', [AdminController::class, 'bulkApproveCars'])->name('cars.bulk-approve');
+    Route::post('/cars/bulk-reject', [AdminController::class, 'bulkRejectCars'])->name('cars.bulk-reject');
+    Route::post('/cars/bulk-delete', [AdminController::class, 'bulkDeleteCars'])->name('cars.bulk-delete');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
+    // API Routes for real-time updates
+    Route::get('/api/cars/status-updates', [CarStatusController::class, 'getStatusUpdates'])->name('api.cars.status-updates');
 });
 
 
@@ -40,8 +79,8 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::prefix('cars')->name('cars.')->group(function () {
     Route::get('/', [CarController::class, 'index'])->name('index');
     Route::get('/compare', [CarController::class, 'compare'])->name('compare');
+    Route::get('/ajax/models', [CarController::class, 'getModels'])->name('models'); // Must be before {car:slug} route
     Route::get('/{car:slug}', [CarController::class, 'show'])->name('show');
-    Route::get('/ajax/models', [CarController::class, 'getModels'])->name('models');
 });
 
 

@@ -30,7 +30,7 @@ class HomeController extends Controller
         $usedCars = Car::approved()
             ->published()
             ->where('condition', 'used')
-            ->with(['make', 'model', 'city'])
+            ->with(['make', 'model', 'city', 'dealer'])
             ->latest('published_at')
             ->take(6)
             ->get();

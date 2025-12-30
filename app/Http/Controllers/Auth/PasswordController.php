@@ -24,6 +24,11 @@ class PasswordController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
+        // Redirect to dashboard profile if coming from dashboard
+        if ($request->has('dashboard') || ($request->header('referer') && str_contains($request->header('referer'), 'dashboard'))) {
+            return redirect()->route('dashboard.profile')->with('success', 'Password updated successfully!');
+        }
+
         return back()->with('status', 'password-updated');
     }
 }

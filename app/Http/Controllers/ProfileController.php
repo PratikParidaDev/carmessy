@@ -16,6 +16,14 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        // Check if user wants dashboard-style profile edit
+        if ($request->has('dashboard') || $request->header('referer') && str_contains($request->header('referer'), 'dashboard')) {
+            return view('dashboard', [
+                'section' => 'edit-profile',
+                'user' => $request->user(),
+            ]);
+        }
+        
         return view('profile.edit', [
             'user' => $request->user(),
         ]);
@@ -33,6 +41,11 @@ class ProfileController extends Controller
         }
 
         $request->user()->save();
+
+        // Redirect to dashboard profile if coming from dashboard
+        if ($request->has('dashboard') || $request->header('referer') && str_contains($request->header('referer'), 'dashboard')) {
+            return Redirect::route('dashboard.profile')->with('success', 'Profile updated successfully!');
+        }
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
