@@ -142,6 +142,17 @@ class DashboardController extends Controller
         $makes = Make::where('is_active', true)->orderBy('name')->get();
         $cities = City::orderBy('name')->get();
         $fields = $this->schemaService->getEditableFields(true); // true = for create form
+        
+        // Add images field manually (not in database schema, handled by media library)
+        $fields['images'] = [
+            'name' => 'images',
+            'label' => 'Car Images',
+            'type' => 'file',
+            'required' => true,
+            'nullable' => false,
+            'multiple' => true,
+            'accept' => 'image/*',
+        ];
 
         return view('dashboard', [
             'section' => 'create-car',
@@ -244,10 +255,21 @@ class DashboardController extends Controller
         $makes = Make::where('is_active', true)->orderBy('name')->get();
         $cities = City::orderBy('name')->get();
         $fields = $this->schemaService->getEditableFields();
+        
+        // Add images field manually (not in database schema, handled by media library)
+        $fields['images'] = [
+            'name' => 'images',
+            'label' => 'Car Images',
+            'type' => 'file',
+            'required' => false, // Not required for edit (can keep existing images)
+            'nullable' => true,
+            'multiple' => true,
+            'accept' => 'image/*',
+        ];
 
         return view('dashboard', [
             'section' => 'edit-car',
-            'car' => $car->load(['make', 'model', 'city']),
+            'car' => $car->load(['make', 'model', 'city', 'media']),
             'makes' => $makes,
             'cities' => $cities,
             'fields' => $fields,

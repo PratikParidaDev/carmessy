@@ -422,6 +422,16 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{{ route('admin.makes') }}" class="{{ request()->routeIs('admin.makes*') ? 'active' : '' }}">
+                        <i class="fas fa-industry"></i> Manage Makes
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.models') }}" class="{{ request()->routeIs('admin.models*') ? 'active' : '' }}">
+                        <i class="fas fa-car-side"></i> Manage Models
+                    </a>
+                </li>
+                <li>
                     <a href="{{ url('/y') }}" target="_blank">
                         <i class="fas fa-cog"></i> Filament Panel
                     </a>
@@ -498,6 +508,18 @@
                     @include('admin.user-edit')
                 @elseif($section === 'admin-cars')
                     @include('admin.cars')
+                @elseif($section === 'admin-makes')
+                    @include('admin.makes')
+                @elseif($section === 'admin-make-create')
+                    @include('admin.make-create')
+                @elseif($section === 'admin-make-edit')
+                    @include('admin.make-edit')
+                @elseif($section === 'admin-models')
+                    @include('admin.models')
+                @elseif($section === 'admin-model-create')
+                    @include('admin.model-create')
+                @elseif($section === 'admin-model-edit')
+                    @include('admin.model-edit')
                 @endif
             @else
                 @include('dashboard.sections.overview')

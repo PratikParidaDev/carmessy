@@ -60,6 +60,22 @@ Route::prefix('admin')->middleware(['auth', 'verified', \App\Http\Middleware\Adm
     Route::post('/cars/bulk-approve', [AdminController::class, 'bulkApproveCars'])->name('cars.bulk-approve');
     Route::post('/cars/bulk-reject', [AdminController::class, 'bulkRejectCars'])->name('cars.bulk-reject');
     Route::post('/cars/bulk-delete', [AdminController::class, 'bulkDeleteCars'])->name('cars.bulk-delete');
+    
+    // Make Management Routes
+    Route::get('/makes', [AdminController::class, 'makes'])->name('makes');
+    Route::get('/makes/create', [AdminController::class, 'createMake'])->name('makes.create');
+    Route::post('/makes', [AdminController::class, 'storeMake'])->name('makes.store');
+    Route::get('/makes/{make}/edit', [AdminController::class, 'editMake'])->name('makes.edit');
+    Route::put('/makes/{make}', [AdminController::class, 'updateMake'])->name('makes.update');
+    Route::delete('/makes/{make}', [AdminController::class, 'deleteMake'])->name('makes.delete');
+    
+    // Model Management Routes (using carModel to avoid conflict with route model binding)
+    Route::get('/car-models', [AdminController::class, 'models'])->name('models');
+    Route::get('/car-models/create', [AdminController::class, 'createModel'])->name('models.create');
+    Route::post('/car-models', [AdminController::class, 'storeModel'])->name('models.store');
+    Route::get('/car-models/{carModel:id}/edit', [AdminController::class, 'editModel'])->name('models.edit');
+    Route::put('/car-models/{carModel:id}', [AdminController::class, 'updateModel'])->name('models.update');
+    Route::delete('/car-models/{carModel:id}', [AdminController::class, 'deleteModel'])->name('models.delete');
 });
 
 Route::middleware('auth')->group(function () {
