@@ -29,7 +29,7 @@ class CarController extends Controller
     public function create()
     {
         $makes = Make::where('is_active', true)->orderBy('name')->get();
-        $cities = City::orderBy('name')->get();
+        $cities = City::where('is_active', true)->orderBy('name')->get();
 
         return view('dealer.cars.create', compact('makes', 'cities'));
     }
@@ -77,7 +77,7 @@ class CarController extends Controller
         $this->authorize('update', $car);
 
         $makes = Make::where('is_active', true)->orderBy('name')->get();
-        $cities = City::orderBy('name')->get();
+        $cities = City::where('is_active', true)->orderBy('name')->get();
 
         return view('dealer.cars.edit', compact('car', 'makes', 'cities'));
     }

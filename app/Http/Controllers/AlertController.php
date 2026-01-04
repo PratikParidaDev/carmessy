@@ -28,7 +28,7 @@ class AlertController extends Controller
     public function create()
     {
         $makes = Make::where('is_active', true)->orderBy('name')->get();
-        $cities = City::orderBy('name')->get();
+        $cities = City::where('is_active', true)->orderBy('name')->get();
 
         return view('alerts.create', compact('makes', 'cities'));
     }

@@ -88,26 +88,41 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function myCars()
+    public function myCars(Request $request)
     {
         $user = auth()->user();
 
         // Admin can see all cars
         if ($user->isAdmin()) {
-            $cars = Car::with(['make', 'model', 'city', 'dealer', 'media'])
-                ->latest()
-                ->paginate(20);
+            $query = Car::with(['make', 'model', 'city', 'dealer', 'media']);
         } elseif ($user->dealer) {
             // Dealers or buyers with dealer profile see only their own cars
-            $cars = $user->dealer->cars()
-                ->with(['make', 'model', 'city', 'media'])
-                ->latest()
-                ->paginate(20);
+            $query = $user->dealer->cars()->with(['make', 'model', 'city', 'media']);
         } else {
             // No dealer profile - redirect to create car page
             return redirect()->route('dashboard.cars.create')
                 ->with('info', 'Post your first car to get started!');
         }
+
+        // Apply filters
+        if ($request->filled('search')) {
+            $query->where('title', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        // Apply sorting and pagination
+        $cars = $query->latest()->paginate(20)->withQueryString();
 
         $listingFields = $this->schemaService->getListingFields();
 
@@ -140,8 +155,19 @@ class DashboardController extends Controller
         }
 
         $makes = Make::where('is_active', true)->orderBy('name')->get();
-        $cities = City::orderBy('name')->get();
+        $cities = City::where('is_active', true)->orderBy('name')->get();
         $fields = $this->schemaService->getEditableFields(true); // true = for create form
+        
+        // Add images field manually (not in database schema, handled by media library)
+        $fields['images'] = [
+            'name' => 'images',
+            'label' => 'Car Images',
+            'type' => 'file',
+            'required' => true,
+            'nullable' => false,
+            'multiple' => true,
+            'accept' => 'image/*',
+        ];
 
         return view('dashboard', [
             'section' => 'create-car',
@@ -242,12 +268,23 @@ class DashboardController extends Controller
         }
 
         $makes = Make::where('is_active', true)->orderBy('name')->get();
-        $cities = City::orderBy('name')->get();
+        $cities = City::where('is_active', true)->orderBy('name')->get();
         $fields = $this->schemaService->getEditableFields();
+        
+        // Add images field manually (not in database schema, handled by media library)
+        $fields['images'] = [
+            'name' => 'images',
+            'label' => 'Car Images',
+            'type' => 'file',
+            'required' => false, // Not required for edit (can keep existing images)
+            'nullable' => true,
+            'multiple' => true,
+            'accept' => 'image/*',
+        ];
 
         return view('dashboard', [
             'section' => 'edit-car',
-            'car' => $car->load(['make', 'model', 'city']),
+            'car' => $car->load(['make', 'model', 'city', 'media']),
             'makes' => $makes,
             'cities' => $cities,
             'fields' => $fields,

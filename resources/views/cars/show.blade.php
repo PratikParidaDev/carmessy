@@ -9,14 +9,15 @@
             <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
                 @php
                     $images = $car->getMedia('images');
-                    $mainImage = $images->first()?->getUrl() ?? 'https://via.placeholder.com/800x600?text=No+Image';
+                    $firstImage = $images->first();
+                    $mainImage = $firstImage ? $firstImage->getUrl() : 'https://via.placeholder.com/800x600?text=No+Image';
                 @endphp
-                <img id="mainImage" src="{{ $mainImage }}" alt="{{ $car->title }}" class="w-full h-96 object-cover">
+                <img id="mainImage" src="{{ $mainImage }}" alt="{{ $car->title }}" class="w-full h-96 object-cover" onerror="this.onerror=null; this.src='https://via.placeholder.com/800x600?text=No+Image';">
                 
                 @if($images->count() > 1)
                 <div class="p-4 grid grid-cols-6 gap-2">
                     @foreach($images as $image)
-                        <img src="{{ $image->getUrl() }}" alt="Car image" class="w-full h-20 object-cover rounded cursor-pointer hover:opacity-75 transition" onclick="document.getElementById('mainImage').src = this.src">
+                        <img src="{{ $image->getUrl() }}" alt="Car image" class="w-full h-20 object-cover rounded cursor-pointer hover:opacity-75 transition" onclick="document.getElementById('mainImage').src = this.src" onerror="this.onerror=null; this.src='https://via.placeholder.com/150x100?text=Image';">
                     @endforeach
                 </div>
                 @endif
@@ -181,7 +182,11 @@
         <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             @foreach($similarCars as $similarCar)
                 <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition">
-                    <img src="{{ $similarCar->getFirstMediaUrl('images') ?: 'https://via.placeholder.com/400x300' }}" alt="{{ $similarCar->title }}" class="w-full h-48 object-cover">
+                    @php
+                        $similarImage = $similarCar->getFirstMedia('images');
+                        $similarImageUrl = $similarImage ? $similarImage->getUrl() : 'https://via.placeholder.com/400x300?text=No+Image';
+                    @endphp
+                    <img src="{{ $similarImageUrl }}" alt="{{ $similarCar->title }}" class="w-full h-48 object-cover" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300?text=No+Image';">
                     <div class="p-4">
                         <h3 class="font-semibold text-lg mb-2 truncate">{{ $similarCar->title }}</h3>
                         <p class="text-2xl font-bold text-blue-600 mb-2">{{ $similarCar->getFormattedPrice() }}</p>

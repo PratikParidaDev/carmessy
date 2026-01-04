@@ -25,7 +25,7 @@ class CarController extends Controller
         } else {
             $cars = Car::approved()
                 ->published()
-                ->with(['make', 'model', 'city', 'dealer'])
+                ->with(['make', 'model', 'city', 'dealer', 'media'])
                 ->when($request->make_id, fn($q) => $q->where('make_id', $request->make_id))
                 ->when($request->model_id, fn($q) => $q->where('model_id', $request->model_id))
                 ->when($request->city_id, fn($q) => $q->where('city_id', $request->city_id))
@@ -45,7 +45,7 @@ class CarController extends Controller
         }
 
         $makes = Make::where('is_active', true)->orderBy('name')->get();
-        $cities = City::orderBy('name')->get();
+        $cities = City::where('is_active', true)->orderBy('name')->get();
 
         return view('cars.index', compact('cars', 'makes', 'cities'));
     }
@@ -55,7 +55,7 @@ class CarController extends Controller
         abort_if($car->status !== 'approved', 404);
         abort_if(!$car->published_at || $car->published_at->isFuture(), 404);
 
-        $car->load(['make', 'model', 'city', 'dealer.city']);
+        $car->load(['make', 'model', 'city', 'dealer.city', 'media']);
         $car->incrementViews();
 
         $similarCars = Car::approved()
@@ -66,7 +66,7 @@ class CarController extends Controller
                       ->orWhere('model_id', $car->model_id)
                       ->orWhereBetween('price', [$car->price * 0.8, $car->price * 1.2]);
             })
-            ->with(['make', 'model', 'city'])
+            ->with(['make', 'model', 'city', 'media'])
             ->limit(6)
             ->get();
 
@@ -85,7 +85,7 @@ class CarController extends Controller
         $cars = Car::approved()
             ->published()
             ->whereIn('id', $carIds)
-            ->with(['make', 'model', 'city', 'dealer'])
+            ->with(['make', 'model', 'city', 'dealer', 'media'])
             ->get();
 
         if ($cars->count() < 2) {

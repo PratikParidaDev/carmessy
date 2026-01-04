@@ -249,9 +249,10 @@
                                         <div class="col-md-4">
                                             <div class="position-relative">
                                                 @php
-                                                    $image = $car->getFirstMediaUrl('images') ?: 'https://via.placeholder.com/400x300?text=No+Image';
+                                                    $firstMedia = $car->getFirstMedia('images');
+                                                    $image = $firstMedia ? $firstMedia->getUrl() : 'https://via.placeholder.com/400x300?text=No+Image';
                                                 @endphp
-                                                <img src="{{ $image }}" class="img-fluid rounded-start car-listing-image" alt="{{ $car->title }}" style="height: 250px; width: 100%; object-fit: cover;">
+                                                <img src="{{ $image }}" class="img-fluid rounded-start car-listing-image" alt="{{ $car->title }}" style="height: 250px; width: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300?text=No+Image';">
                                                 @if($car->is_featured)
                                                     <span class="badge bg-danger position-absolute top-0 start-0 m-2">
                                                         <i class="fas fa-star"></i> Featured

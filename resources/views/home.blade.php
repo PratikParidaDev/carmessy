@@ -113,10 +113,16 @@
                 <div class="col-md-6 col-lg-3">
                     <div class="card h-100">
                         @php
-                            $image = $car->getFirstMediaUrl('images') ?: 'https://via.placeholder.com/300x200?text=No+Image';
+                            $firstMedia = $car->getFirstMedia('images');
+                            if ($firstMedia) {
+                                // Files are stored in folders by media ID: storage/app/public/{id}/{filename}
+                                $image = asset('storage/' . $firstMedia->id . '/' . $firstMedia->file_name);
+                            } else {
+                                $image = 'https://via.placeholder.com/300x200?text=No+Image';
+                            }
                         @endphp
                         <div class="position-relative">
-                            <img src="{{ $image }}" class="card-img-top" alt="{{ $car->title }}">
+                            <img src="{{ $image }}" class="card-img-top" alt="{{ $car->title }}" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200?text=No+Image';">
                             @if($car->is_featured)
                                 <span class="badge bg-danger position-absolute top-0 start-0 m-2">Featured</span>
                             @endif
@@ -175,9 +181,15 @@
                 <div class="col-md-6 col-lg-4">
                     <div class="card h-100">
                         @php
-                            $image = $car->getFirstMediaUrl('images') ?: 'https://via.placeholder.com/300x200?text=No+Image';
+                            $firstMedia = $car->getFirstMedia('images');
+                            if ($firstMedia) {
+                                // Files are stored in folders by media ID (1/, 2/, 3/, etc.)
+                                $image = asset('storage/' . $firstMedia->id . '/' . $firstMedia->file_name);
+                            } else {
+                                $image = 'https://via.placeholder.com/300x200?text=No+Image';
+                            }
                         @endphp
-                        <img src="{{ $image }}" class="card-img-top" alt="{{ $car->title }}">
+                        <img src="{{ $image }}" class="card-img-top" alt="{{ $car->title }}" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200?text=No+Image';">
                         <div class="card-body">
                             <h5 class="card-title mb-2">{{ $car->make->name }} {{ $car->model->name }}</h5>
                             <p class="text-muted small mb-2">
@@ -218,12 +230,19 @@
                          onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.1)'"
                          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)'">
                         @php
-                            $image = $car->getFirstMediaUrl('images') ?: 'https://via.placeholder.com/400x250?text=' . urlencode($car->title);
+                            $firstMedia = $car->getFirstMedia('images');
+                            if ($firstMedia) {
+                                // Files are stored in folders by media ID: storage/app/public/{id}/{filename}
+                                $image = asset('storage/' . $firstMedia->id . '/' . $firstMedia->file_name);
+                            } else {
+                                $image = 'https://via.placeholder.com/400x250?text=' . urlencode($car->title);
+                            }
                         @endphp
                         <div style="position: relative; width: 100%; height: 200px; overflow: hidden; background: #f5f5f5;">
                             <img src="{{ $image }}" 
                                  alt="{{ $car->title }}" 
-                                 style="width: 100%; height: 100%; object-fit: cover;">
+                                 style="width: 100%; height: 100%; object-fit: cover;"
+                                 onerror="this.onerror=null; this.src='https://via.placeholder.com/400x250?text=No+Image';">
                             <span class="badge" style="position: absolute; top: 10px; right: 10px; background: #ffc107; color: #000; padding: 5px 10px; font-weight: 600; border-radius: 4px;">
                                 Used
                             </span>

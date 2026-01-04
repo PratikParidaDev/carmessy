@@ -6,6 +6,83 @@
         </a>
     </div>
 
+    <!-- Filter Section -->
+    <div style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px;">
+        <form action="{{ route('admin.cars') }}" method="GET" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end;">
+            <!-- Search by Name -->
+            <div>
+                <label for="search" style="display: block; margin-bottom: 5px; font-weight: 500; font-size: 13px; color: #333;">
+                    Search by Name
+                </label>
+                <input 
+                    type="text" 
+                    id="search" 
+                    name="search" 
+                    value="{{ request('search') }}" 
+                    placeholder="Enter car title..."
+                    style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;"
+                />
+            </div>
+
+            <!-- Filter by Status -->
+            <div>
+                <label for="status_filter" style="display: block; margin-bottom: 5px; font-weight: 500; font-size: 13px; color: #333;">
+                    Filter by Status
+                </label>
+                <select 
+                    id="status_filter" 
+                    name="status" 
+                    style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;"
+                >
+                    <option value="">All Statuses</option>
+                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                    <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
+                    <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                    <option value="sold" {{ request('status') == 'sold' ? 'selected' : '' }}>Sold</option>
+                </select>
+            </div>
+
+            <!-- Filter by Date -->
+            <div>
+                <label for="date_from" style="display: block; margin-bottom: 5px; font-weight: 500; font-size: 13px; color: #333;">
+                    Date From
+                </label>
+                <input 
+                    type="date" 
+                    id="date_from" 
+                    name="date_from" 
+                    value="{{ request('date_from') }}" 
+                    style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;"
+                />
+            </div>
+
+            <div>
+                <label for="date_to" style="display: block; margin-bottom: 5px; font-weight: 500; font-size: 13px; color: #333;">
+                    Date To
+                </label>
+                <input 
+                    type="date" 
+                    id="date_to" 
+                    name="date_to" 
+                    value="{{ request('date_to') }}" 
+                    style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;"
+                />
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn btn-primary" style="padding: 8px 16px; font-size: 14px;">
+                    <i class="fas fa-filter"></i> Apply Filters
+                </button>
+                @if(request()->hasAny(['search', 'status', 'date_from', 'date_to']))
+                    <a href="{{ route('admin.cars') }}" class="btn btn-secondary" style="padding: 8px 16px; font-size: 14px;">
+                        <i class="fas fa-times"></i> Clear
+                    </a>
+                @endif
+            </div>
+        </form>
+    </div>
+
     @if($cars->count() > 0)
         <!-- Bulk Actions -->
         <div style="margin-bottom: 15px; padding: 10px; background: #f9f9f9; border: 1px solid #ddd; display: flex; align-items: center; gap: 10px;">
@@ -81,15 +158,17 @@
                         </td>
                         <td>{{ $car->created_at->format('M j, Y') }}</td>
                         <td>
-                            <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                                @if($car->status === 'pending')
-                                <form action="{{ route('admin.cars.approve', $car->id) }}" method="POST" style="display: inline;">
+                            <div class="car-actions" data-car-id="{{ $car->id }}" data-car-status="{{ $car->status }}" style="display: flex; gap: 5px; flex-wrap: wrap;">
+                                @if($car->status !== 'approved')
+                                <form action="{{ route('admin.cars.approve', $car->id) }}" method="POST" class="approve-form" style="display: inline;">
                                     @csrf
                                     <button type="submit" class="btn btn-primary" style="padding: 4px 8px; font-size: 12px;">
                                         <i class="fas fa-check"></i> Approve
                                     </button>
                                 </form>
-                                <form action="{{ route('admin.cars.reject', $car->id) }}" method="POST" style="display: inline;">
+                                @endif
+                                @if($car->status !== 'rejected')
+                                <form action="{{ route('admin.cars.reject', $car->id) }}" method="POST" class="reject-form" style="display: inline;">
                                     @csrf
                                     <button type="submit" class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;">
                                         <i class="fas fa-times"></i> Reject
@@ -267,18 +346,120 @@
                 statusCell.textContent = carData.status.charAt(0).toUpperCase() + carData.status.slice(1);
             }
 
-            // Update actions column - remove approve/reject buttons if status changed
-            const actionsCell = carRow.querySelector('td:last-child');
-            if (actionsCell && carData.status !== 'pending') {
-                // Remove approve/reject buttons if status is no longer pending
-                const approveBtn = actionsCell.querySelector('form[action*="approve"]');
-                const rejectBtn = actionsCell.querySelector('form[action*="reject"]');
-                if (approveBtn) approveBtn.remove();
-                if (rejectBtn) rejectBtn.remove();
+            // Update actions column - dynamically show/hide approve/reject buttons
+            const actionsDiv = carRow.querySelector('.car-actions');
+            if (actionsDiv) {
+                actionsDiv.setAttribute('data-car-status', carData.status);
+                
+                // Get current approve and reject forms
+                const approveForm = actionsDiv.querySelector('.approve-form');
+                const rejectForm = actionsDiv.querySelector('.reject-form');
+                
+                // Show/hide approve button based on status
+                if (carData.status === 'approved') {
+                    // Hide approve button if already approved
+                    if (approveForm) {
+                        approveForm.style.display = 'none';
+                    }
+                    // Show reject button if not present
+                    if (!rejectForm) {
+                        createRejectButton(actionsDiv, carData.id);
+                    } else {
+                        rejectForm.style.display = 'inline';
+                    }
+                } else if (carData.status === 'rejected') {
+                    // Hide reject button if already rejected
+                    if (rejectForm) {
+                        rejectForm.style.display = 'none';
+                    }
+                    // Show approve button if not present
+                    if (!approveForm) {
+                        createApproveButton(actionsDiv, carData.id);
+                    } else {
+                        approveForm.style.display = 'inline';
+                    }
+                } else {
+                    // For pending or other statuses, show both buttons
+                    if (!approveForm) {
+                        createApproveButton(actionsDiv, carData.id);
+                    } else {
+                        approveForm.style.display = 'inline';
+                    }
+                    if (!rejectForm) {
+                        createRejectButton(actionsDiv, carData.id);
+                    } else {
+                        rejectForm.style.display = 'inline';
+                    }
+                }
             }
 
             // Show a notification
             showNotification(`Car "${carData.title}" status updated to ${carData.status}`, 'success');
+        }
+
+        function createApproveButton(container, carId) {
+            const form = document.createElement('form');
+            form.action = `/admin/cars/${carId}/approve`;
+            form.method = 'POST';
+            form.className = 'approve-form';
+            form.style.display = 'inline';
+            
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || 
+                             document.querySelector('input[name="_token"]')?.value;
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+            
+            const button = document.createElement('button');
+            button.type = 'submit';
+            button.className = 'btn btn-primary';
+            button.style.cssText = 'padding: 4px 8px; font-size: 12px;';
+            button.innerHTML = '<i class="fas fa-check"></i> Approve';
+            form.appendChild(button);
+            
+            // Insert before Edit button
+            const editBtn = container.querySelector('a[href*="edit"]');
+            if (editBtn) {
+                container.insertBefore(form, editBtn);
+            } else {
+                container.appendChild(form);
+            }
+        }
+
+        function createRejectButton(container, carId) {
+            const form = document.createElement('form');
+            form.action = `/admin/cars/${carId}/reject`;
+            form.method = 'POST';
+            form.className = 'reject-form';
+            form.style.display = 'inline';
+            
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || 
+                             document.querySelector('input[name="_token"]')?.value;
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+            
+            const button = document.createElement('button');
+            button.type = 'submit';
+            button.className = 'btn btn-secondary';
+            button.style.cssText = 'padding: 4px 8px; font-size: 12px;';
+            button.innerHTML = '<i class="fas fa-times"></i> Reject';
+            form.appendChild(button);
+            
+            // Insert after approve button or before Edit button
+            const approveForm = container.querySelector('.approve-form');
+            const editBtn = container.querySelector('a[href*="edit"]');
+            if (approveForm && approveForm.nextSibling) {
+                container.insertBefore(form, approveForm.nextSibling);
+            } else if (editBtn) {
+                container.insertBefore(form, editBtn);
+            } else {
+                container.appendChild(form);
+            }
         }
 
         function showNotification(message, type = 'info') {
