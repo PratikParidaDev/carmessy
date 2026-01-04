@@ -1244,5 +1244,151 @@ class AdminController extends Controller
 
         return back()->with('success', 'City deleted successfully.');
     }
+
+    /**
+     * ============================================
+     * SUPER ADMIN - ADMIN MANAGEMENT
+     * ============================================
+     */
+
+    /**
+     * List all admins (super admin only)
+     */
+    public function admins()
+    {
+        $user = auth()->user();
+        
+        if (!$user->isSuperAdmin()) {
+            abort(403, 'Unauthorized access. Super Admin privileges required.');
+        }
+
+        $admins = User::whereIn('role', ['admin', 'super_admin'])
+            ->latest()
+            ->paginate(20);
+
+        return view('dashboard', [
+            'section' => 'super-admin-admins',
+            'admins' => $admins,
+        ]);
+    }
+
+    /**
+     * Show form to create a new admin
+     */
+    public function createAdmin()
+    {
+        $user = auth()->user();
+        
+        if (!$user->isSuperAdmin()) {
+            abort(403, 'Unauthorized access. Super Admin privileges required.');
+        }
+
+        return view('dashboard', [
+            'section' => 'super-admin-admin-create',
+        ]);
+    }
+
+    /**
+     * Store a newly created admin
+     */
+    public function storeAdmin(Request $request)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isSuperAdmin()) {
+            abort(403, 'Unauthorized access. Super Admin privileges required.');
+        }
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'role' => ['required', 'in:admin,super_admin'],
+        ]);
+
+        $admin = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => $validated['role'],
+            'is_verified' => true,
+            'verified_at' => now(),
+        ]);
+
+        return redirect()->route('super-admin.admins')
+            ->with('success', ucfirst(str_replace('_', ' ', $validated['role'])) . ' created successfully.');
+    }
+
+    /**
+     * Show form to edit an admin
+     */
+    public function editAdmin(User $admin)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isSuperAdmin()) {
+            abort(403, 'Unauthorized access. Super Admin privileges required.');
+        }
+
+        return view('dashboard', [
+            'section' => 'super-admin-admin-edit',
+            'editAdmin' => $admin,
+        ]);
+    }
+
+    /**
+     * Update an admin
+     */
+    public function updateAdmin(Request $request, User $admin)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isSuperAdmin()) {
+            abort(403, 'Unauthorized access. Super Admin privileges required.');
+        }
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,' . $admin->id],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'role' => ['required', 'in:admin,super_admin'],
+        ]);
+
+        $updateData = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'role' => $validated['role'],
+        ];
+
+        if (!empty($validated['password'])) {
+            $updateData['password'] = Hash::make($validated['password']);
+        }
+
+        $admin->update($updateData);
+
+        return redirect()->route('super-admin.admins')
+            ->with('success', 'Admin updated successfully.');
+    }
+
+    /**
+     * Delete an admin (super admin only)
+     */
+    public function deleteAdmin(User $admin)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isSuperAdmin()) {
+            abort(403, 'Unauthorized access. Super Admin privileges required.');
+        }
+
+        // Prevent deleting yourself
+        if ($admin->id === $user->id) {
+            return back()->with('error', 'You cannot delete your own account.');
+        }
+
+        $admin->delete();
+
+        return back()->with('success', 'Admin deleted successfully.');
+    }
 }
 
