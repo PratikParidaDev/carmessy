@@ -7,6 +7,10 @@ use App\Models\Car;
 use App\Models\Dealer;
 use App\Models\Make;
 use App\Models\CarModel;
+use App\Models\AdminPreference;
+use App\Models\Feature;
+use App\Models\SafetyFeature;
+use App\Models\City;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -38,7 +42,7 @@ class AdminController extends Controller
         ];
 
         // Recent pending cars
-        $pendingCars = Car::with(['make', 'model', 'dealer.user'])
+        $pendingCars = Car::with(['make', 'model', 'dealer.user', 'media'])
             ->where('status', 'pending')
             ->latest()
             ->limit(5)
@@ -215,7 +219,7 @@ class AdminController extends Controller
     /**
      * List all cars (admin view)
      */
-    public function cars()
+    public function cars(Request $request)
     {
         $user = auth()->user();
         
@@ -223,9 +227,32 @@ class AdminController extends Controller
             abort(403, 'Unauthorized access');
         }
 
-        $cars = Car::with(['make', 'model', 'city', 'dealer.user', 'media'])
-            ->latest()
-            ->paginate(20);
+        $query = Car::with(['make', 'model', 'city', 'dealer.user', 'media']);
+
+        // Apply filters
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', '%' . $search . '%')
+                  ->orWhereHas('make', fn($q) => $q->where('name', 'like', '%' . $search . '%'))
+                  ->orWhereHas('model', fn($q) => $q->where('name', 'like', '%' . $search . '%'))
+                  ->orWhereHas('dealer.user', fn($q) => $q->where('name', 'like', '%' . $search . '%'));
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $cars = $query->latest()->paginate(20)->withQueryString();
 
         return view('dashboard', [
             'section' => 'admin-cars',
@@ -268,6 +295,7 @@ class AdminController extends Controller
 
         $car->update([
             'status' => 'rejected',
+            'published_at' => null, // Clear published_at when rejected
         ]);
 
         // Broadcast status update for real-time updates
@@ -727,6 +755,494 @@ class AdminController extends Controller
         $carModel->delete();
 
         return back()->with('success', 'Model deleted successfully.');
+    }
+
+    /**
+     * ============================================
+     * ADMIN COLOR CUSTOMIZATION
+     * ============================================
+     */
+
+    /**
+     * Show admin color customization page
+     */
+    public function colorSettings()
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $preference = $user->adminPreference;
+        $presets = AdminPreference::getPresets();
+        $currentColors = $user->getAdminColors();
+
+        return view('dashboard', [
+            'section' => 'admin-color-settings',
+            'preference' => $preference,
+            'presets' => $presets,
+            'currentColors' => $currentColors,
+        ]);
+    }
+
+    /**
+     * Save admin color preferences
+     */
+    public function saveColorSettings(Request $request)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $validated = $request->validate([
+            'sidebar_bg' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'sidebar_hover' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'sidebar_text' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'sidebar_active' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'content_bg' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'primary_color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+        ]);
+
+        $preference = AdminPreference::updateOrCreate(
+            ['user_id' => $user->id],
+            $validated
+        );
+
+        return redirect()->route('admin.color-settings')
+            ->with('success', 'Color scheme saved successfully! The changes will be applied immediately.');
+    }
+
+    /**
+     * Apply a preset color scheme
+     */
+    public function applyPreset(Request $request)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $presetName = $request->input('preset');
+        $presets = AdminPreference::getPresets();
+
+        if (!isset($presets[$presetName])) {
+            return back()->with('error', 'Invalid preset selected.');
+        }
+
+        $preset = $presets[$presetName];
+
+        AdminPreference::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'sidebar_bg' => $preset['sidebar_bg'],
+                'sidebar_hover' => $preset['sidebar_hover'],
+                'sidebar_text' => $preset['sidebar_text'],
+                'sidebar_active' => $preset['sidebar_active'],
+                'content_bg' => $preset['content_bg'],
+                'primary_color' => $preset['primary_color'],
+            ]
+        );
+
+        return redirect()->route('admin.color-settings')
+            ->with('success', 'Color preset "' . $preset['name'] . '" applied successfully!');
+    }
+
+    /**
+     * Reset to default colors
+     */
+    public function resetColors()
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        if ($user->adminPreference) {
+            $user->adminPreference->delete();
+        }
+
+        return redirect()->route('admin.color-settings')
+            ->with('success', 'Color scheme reset to default successfully!');
+    }
+
+    /**
+     * ============================================
+     * FEATURES MANAGEMENT
+     * ============================================
+     */
+
+    /**
+     * List all features
+     */
+    public function features()
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $features = Feature::orderBy('order')->orderBy('name')->paginate(20);
+
+        return view('dashboard', [
+            'section' => 'admin-features',
+            'features' => $features,
+        ]);
+    }
+
+    /**
+     * Show form to create a feature
+     */
+    public function createFeature()
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        return view('dashboard', [
+            'section' => 'admin-feature-create',
+        ]);
+    }
+
+    /**
+     * Store a new feature
+     */
+    public function storeFeature(Request $request)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:features,name',
+            'description' => 'nullable|string|max:1000',
+            'icon' => 'nullable|string|max:255',
+            'order' => 'nullable|integer|min:0',
+            'is_active' => 'boolean',
+        ]);
+
+        Feature::create($validated);
+
+        return redirect()->route('admin.features')
+            ->with('success', 'Feature created successfully.');
+    }
+
+    /**
+     * Show form to edit a feature
+     */
+    public function editFeature(Feature $feature)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        return view('dashboard', [
+            'section' => 'admin-feature-edit',
+            'editFeature' => $feature,
+        ]);
+    }
+
+    /**
+     * Update a feature
+     */
+    public function updateFeature(Request $request, Feature $feature)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:features,name,' . $feature->id,
+            'description' => 'nullable|string|max:1000',
+            'icon' => 'nullable|string|max:255',
+            'order' => 'nullable|integer|min:0',
+            'is_active' => 'boolean',
+        ]);
+
+        $feature->update($validated);
+
+        return redirect()->route('admin.features')
+            ->with('success', 'Feature updated successfully.');
+    }
+
+    /**
+     * Delete a feature
+     */
+    public function deleteFeature(Feature $feature)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $feature->delete();
+
+        return back()->with('success', 'Feature deleted successfully.');
+    }
+
+    /**
+     * ============================================
+     * SAFETY FEATURES MANAGEMENT
+     * ============================================
+     */
+
+    /**
+     * List all safety features
+     */
+    public function safetyFeatures()
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $safetyFeatures = SafetyFeature::orderBy('order')->orderBy('name')->paginate(20);
+
+        return view('dashboard', [
+            'section' => 'admin-safety-features',
+            'safetyFeatures' => $safetyFeatures,
+        ]);
+    }
+
+    /**
+     * Show form to create a safety feature
+     */
+    public function createSafetyFeature()
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        return view('dashboard', [
+            'section' => 'admin-safety-feature-create',
+        ]);
+    }
+
+    /**
+     * Store a new safety feature
+     */
+    public function storeSafetyFeature(Request $request)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:safety_features,name',
+            'description' => 'nullable|string|max:1000',
+            'icon' => 'nullable|string|max:255',
+            'order' => 'nullable|integer|min:0',
+            'is_active' => 'boolean',
+        ]);
+
+        SafetyFeature::create($validated);
+
+        return redirect()->route('admin.safety-features')
+            ->with('success', 'Safety feature created successfully.');
+    }
+
+    /**
+     * Show form to edit a safety feature
+     */
+    public function editSafetyFeature(SafetyFeature $safetyFeature)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        return view('dashboard', [
+            'section' => 'admin-safety-feature-edit',
+            'editSafetyFeature' => $safetyFeature,
+        ]);
+    }
+
+    /**
+     * Update a safety feature
+     */
+    public function updateSafetyFeature(Request $request, SafetyFeature $safetyFeature)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:safety_features,name,' . $safetyFeature->id,
+            'description' => 'nullable|string|max:1000',
+            'icon' => 'nullable|string|max:255',
+            'order' => 'nullable|integer|min:0',
+            'is_active' => 'boolean',
+        ]);
+
+        $safetyFeature->update($validated);
+
+        return redirect()->route('admin.safety-features')
+            ->with('success', 'Safety feature updated successfully.');
+    }
+
+    /**
+     * Delete a safety feature
+     */
+    public function deleteSafetyFeature(SafetyFeature $safetyFeature)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $safetyFeature->delete();
+
+        return back()->with('success', 'Safety feature deleted successfully.');
+    }
+
+    /**
+     * ============================================
+     * CITIES MANAGEMENT
+     * ============================================
+     */
+
+    /**
+     * List all cities
+     */
+    public function cities()
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $cities = City::orderBy('state')->orderBy('name')->paginate(20);
+
+        return view('dashboard', [
+            'section' => 'admin-cities',
+            'cities' => $cities,
+        ]);
+    }
+
+    /**
+     * Show form to create a city
+     */
+    public function createCity()
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        return view('dashboard', [
+            'section' => 'admin-city-create',
+        ]);
+    }
+
+    /**
+     * Store a new city
+     */
+    public function storeCity(Request $request)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:cities,name',
+            'state' => 'required|string|max:255',
+            'is_popular' => 'boolean',
+            'is_active' => 'boolean',
+        ]);
+
+        City::create($validated);
+
+        return redirect()->route('admin.cities')
+            ->with('success', 'City created successfully.');
+    }
+
+    /**
+     * Show form to edit a city
+     */
+    public function editCity(City $city)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        return view('dashboard', [
+            'section' => 'admin-city-edit',
+            'editCity' => $city,
+        ]);
+    }
+
+    /**
+     * Update a city
+     */
+    public function updateCity(Request $request, City $city)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:cities,name,' . $city->id,
+            'state' => 'required|string|max:255',
+            'is_popular' => 'boolean',
+            'is_active' => 'boolean',
+        ]);
+
+        $city->update($validated);
+
+        return redirect()->route('admin.cities')
+            ->with('success', 'City updated successfully.');
+    }
+
+    /**
+     * Delete a city
+     */
+    public function deleteCity(City $city)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        // Check if city has cars or dealers
+        if ($city->cars()->count() > 0 || $city->dealers()->count() > 0) {
+            return back()->with('error', 'Cannot delete city. It has associated cars or dealers.');
+        }
+
+        $city->delete();
+
+        return back()->with('success', 'City deleted successfully.');
     }
 }
 

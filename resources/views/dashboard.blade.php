@@ -17,11 +17,12 @@
     <style>
         :root {
             --sidebar-width: 200px;
-            --sidebar-bg: #23282d;
-            --sidebar-hover: #32373c;
-            --sidebar-text: #b4b9be;
-            --sidebar-active: #0073aa;
-            --content-bg: #f0f0f1;
+            --sidebar-bg: {{ auth()->check() && auth()->user()->isAdmin() ? auth()->user()->getAdminColors()['sidebar_bg'] : '#23282d' }};
+            --sidebar-hover: {{ auth()->check() && auth()->user()->isAdmin() ? auth()->user()->getAdminColors()['sidebar_hover'] : '#32373c' }};
+            --sidebar-text: {{ auth()->check() && auth()->user()->isAdmin() ? auth()->user()->getAdminColors()['sidebar_text'] : '#b4b9be' }};
+            --sidebar-active: {{ auth()->check() && auth()->user()->isAdmin() ? auth()->user()->getAdminColors()['sidebar_active'] : '#0073aa' }};
+            --content-bg: {{ auth()->check() && auth()->user()->isAdmin() ? auth()->user()->getAdminColors()['content_bg'] : '#f0f0f1' }};
+            --primary-color: {{ auth()->check() && auth()->user()->isAdmin() ? auth()->user()->getAdminColors()['primary_color'] : '#2271b1' }};
         }
 
         body {
@@ -84,13 +85,13 @@
 
         .sidebar-menu a:hover {
             background: var(--sidebar-hover);
-            color: #00a0d2;
+            color: var(--primary-color);
         }
 
         .sidebar-menu a.active {
             background: var(--sidebar-active);
             color: #fff;
-            border-left: 4px solid #00a0d2;
+            border-left: 4px solid var(--primary-color);
         }
 
         .sidebar-menu a i {
@@ -243,14 +244,14 @@
         }
 
         .btn-primary {
-            background: #2271b1;
-            border-color: #2271b1;
+            background: var(--primary-color);
+            border-color: var(--primary-color);
             color: #fff;
         }
 
         .btn-primary:hover {
-            background: #135e96;
-            border-color: #135e96;
+            background: var(--sidebar-active);
+            border-color: var(--sidebar-active);
             color: #fff;
         }
 
@@ -300,9 +301,9 @@
         }
 
         .form-control:focus {
-            border-color: #2271b1;
+            border-color: var(--primary-color);
             outline: none;
-            box-shadow: 0 0 0 1px #2271b1;
+            box-shadow: 0 0 0 1px var(--primary-color);
         }
 
         /* Responsive */
@@ -432,6 +433,26 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{{ route('admin.color-settings') }}" class="{{ request()->routeIs('admin.color-settings*') ? 'active' : '' }}">
+                        <i class="fas fa-palette"></i> Color Settings
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.features') }}" class="{{ request()->routeIs('admin.features*') ? 'active' : '' }}">
+                        <i class="fas fa-star"></i> Manage Features
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.safety-features') }}" class="{{ request()->routeIs('admin.safety-features*') ? 'active' : '' }}">
+                        <i class="fas fa-shield-alt"></i> Manage Safety Features
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.cities') }}" class="{{ request()->routeIs('admin.cities*') ? 'active' : '' }}">
+                        <i class="fas fa-map-marker-alt"></i> Manage Cities
+                    </a>
+                </li>
+                <li>
                     <a href="{{ url('/y') }}" target="_blank">
                         <i class="fas fa-cog"></i> Filament Panel
                     </a>
@@ -463,6 +484,22 @@
                         @elseif($section === 'admin-user-create') Create User
                         @elseif($section === 'admin-user-edit') Edit User
                         @elseif($section === 'admin-cars') Manage Cars
+                        @elseif($section === 'admin-makes') Manage Makes
+                        @elseif($section === 'admin-make-create') Create Make
+                        @elseif($section === 'admin-make-edit') Edit Make
+                        @elseif($section === 'admin-models') Manage Models
+                        @elseif($section === 'admin-model-create') Create Model
+                        @elseif($section === 'admin-model-edit') Edit Model
+                        @elseif($section === 'admin-color-settings') Color Settings
+                        @elseif($section === 'admin-features') Manage Features
+                        @elseif($section === 'admin-feature-create') Create Feature
+                        @elseif($section === 'admin-feature-edit') Edit Feature
+                        @elseif($section === 'admin-safety-features') Manage Safety Features
+                        @elseif($section === 'admin-safety-feature-create') Create Safety Feature
+                        @elseif($section === 'admin-safety-feature-edit') Edit Safety Feature
+                        @elseif($section === 'admin-cities') Manage Cities
+                        @elseif($section === 'admin-city-create') Create City
+                        @elseif($section === 'admin-city-edit') Edit City
                         @else Dashboard
                         @endif
                     @else
@@ -520,6 +557,26 @@
                     @include('admin.model-create')
                 @elseif($section === 'admin-model-edit')
                     @include('admin.model-edit')
+                @elseif($section === 'admin-color-settings')
+                    @include('admin.color-settings')
+                @elseif($section === 'admin-features')
+                    @include('admin.features')
+                @elseif($section === 'admin-feature-create')
+                    @include('admin.feature-create')
+                @elseif($section === 'admin-feature-edit')
+                    @include('admin.feature-edit')
+                @elseif($section === 'admin-safety-features')
+                    @include('admin.safety-features')
+                @elseif($section === 'admin-safety-feature-create')
+                    @include('admin.safety-feature-create')
+                @elseif($section === 'admin-safety-feature-edit')
+                    @include('admin.safety-feature-edit')
+                @elseif($section === 'admin-cities')
+                    @include('admin.cities')
+                @elseif($section === 'admin-city-create')
+                    @include('admin.city-create')
+                @elseif($section === 'admin-city-edit')
+                    @include('admin.city-edit')
                 @endif
             @else
                 @include('dashboard.sections.overview')

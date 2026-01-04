@@ -6,6 +6,83 @@
         </a>
     </div>
 
+    <!-- Filter Section -->
+    <div style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px;">
+        <form action="{{ route('dashboard.my-cars') }}" method="GET" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end;">
+            <!-- Search by Name -->
+            <div>
+                <label for="search" style="display: block; margin-bottom: 5px; font-weight: 500; font-size: 13px; color: #333;">
+                    Search by Name
+                </label>
+                <input 
+                    type="text" 
+                    id="search" 
+                    name="search" 
+                    value="{{ request('search') }}" 
+                    placeholder="Enter car title..."
+                    style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;"
+                />
+            </div>
+
+            <!-- Filter by Status -->
+            <div>
+                <label for="status_filter" style="display: block; margin-bottom: 5px; font-weight: 500; font-size: 13px; color: #333;">
+                    Filter by Status
+                </label>
+                <select 
+                    id="status_filter" 
+                    name="status" 
+                    style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;"
+                >
+                    <option value="">All Statuses</option>
+                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                    <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
+                    <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                    <option value="sold" {{ request('status') == 'sold' ? 'selected' : '' }}>Sold</option>
+                </select>
+            </div>
+
+            <!-- Filter by Date -->
+            <div>
+                <label for="date_from" style="display: block; margin-bottom: 5px; font-weight: 500; font-size: 13px; color: #333;">
+                    Date From
+                </label>
+                <input 
+                    type="date" 
+                    id="date_from" 
+                    name="date_from" 
+                    value="{{ request('date_from') }}" 
+                    style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;"
+                />
+            </div>
+
+            <div>
+                <label for="date_to" style="display: block; margin-bottom: 5px; font-weight: 500; font-size: 13px; color: #333;">
+                    Date To
+                </label>
+                <input 
+                    type="date" 
+                    id="date_to" 
+                    name="date_to" 
+                    value="{{ request('date_to') }}" 
+                    style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;"
+                />
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn btn-primary" style="padding: 8px 16px; font-size: 14px;">
+                    <i class="fas fa-filter"></i> Apply Filters
+                </button>
+                @if(request()->hasAny(['search', 'status', 'date_from', 'date_to']))
+                    <a href="{{ route('dashboard.my-cars') }}" class="btn btn-secondary" style="padding: 8px 16px; font-size: 14px;">
+                        <i class="fas fa-times"></i> Clear
+                    </a>
+                @endif
+            </div>
+        </form>
+    </div>
+
     @if(!isset($listingFields))
         @php
             // Fallback: If listingFields is not set, use default fields

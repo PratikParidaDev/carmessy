@@ -94,6 +94,32 @@ class User extends Authenticatable
     {
         return $this->role === 'user';
     }
+
+    public function adminPreference()
+    {
+        return $this->hasOne(AdminPreference::class);
+    }
+
+    /**
+     * Get admin color preferences or defaults
+     */
+    public function getAdminColors(): array
+    {
+        $preference = $this->adminPreference;
+        
+        if ($preference) {
+            return [
+                'sidebar_bg' => $preference->sidebar_bg,
+                'sidebar_hover' => $preference->sidebar_hover,
+                'sidebar_text' => $preference->sidebar_text,
+                'sidebar_active' => $preference->sidebar_active,
+                'content_bg' => $preference->content_bg,
+                'primary_color' => $preference->primary_color,
+            ];
+        }
+        
+        return AdminPreference::getDefaults();
+    }
 }
 
 

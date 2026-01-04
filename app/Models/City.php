@@ -18,12 +18,14 @@ class City extends Model
         'slug',
         'state',
         'is_popular',
+        'is_active',
     ];
 
     protected function casts(): array
     {
         return [
             'is_popular' => 'boolean',
+            'is_active' => 'boolean',
         ];
     }
 
@@ -36,6 +38,22 @@ class City extends Model
                 $city->slug = Str::slug($city->name);
             }
         });
+
+        static::updating(function ($city) {
+            if ($city->isDirty('name') && empty($city->slug)) {
+                $city->slug = Str::slug($city->name);
+            }
+        });
+    }
+
+    /**
+     * Get active cities ordered by name
+     */
+    public static function getActive()
+    {
+        return static::where('is_active', true)
+            ->orderBy('name')
+            ->get();
     }
 
     public function cars()

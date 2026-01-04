@@ -14,7 +14,7 @@ class HomeController extends Controller
         $featuredCars = Car::approved()
             ->published()
             ->featured()
-            ->with(['make', 'model', 'city', 'dealer'])
+            ->with(['make', 'model', 'city', 'dealer', 'media'])
             ->latest('published_at')
             ->take(8)
             ->get();
@@ -22,7 +22,7 @@ class HomeController extends Controller
         $newCars = Car::approved()
             ->published()
             ->where('condition', 'new')
-            ->with(['make', 'model', 'city'])
+            ->with(['make', 'model', 'city', 'media'])
             ->latest('published_at')
             ->take(6)
             ->get();
@@ -30,7 +30,7 @@ class HomeController extends Controller
         $usedCars = Car::approved()
             ->published()
             ->where('condition', 'used')
-            ->with(['make', 'model', 'city', 'dealer'])
+            ->with(['make', 'model', 'city', 'dealer', 'media'])
             ->latest('published_at')
             ->take(6)
             ->get();
@@ -41,7 +41,7 @@ class HomeController extends Controller
             ->withCount('cars')
             ->get();
 
-        $popularCities = City::where('is_popular', true)
+        $popularCities = City::where('is_popular', true)->where('is_active', true)
             ->withCount('cars')
             ->having('cars_count', '>', 0)
             ->get();

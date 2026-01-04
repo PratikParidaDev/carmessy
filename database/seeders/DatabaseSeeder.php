@@ -23,6 +23,8 @@ class DatabaseSeeder extends Seeder
             PlanSeeder::class,
             DealerSeeder::class,
             CarSeeder::class,
+            FeatureSeeder::class,
+            SafetyFeatureSeeder::class,
         ]);
 
     }

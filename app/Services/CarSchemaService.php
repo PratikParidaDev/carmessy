@@ -5,6 +5,8 @@ namespace App\Services;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Schema\Blueprint;
+use App\Models\Feature;
+use App\Models\SafetyFeature;
 
 class CarSchemaService
 {
@@ -265,39 +267,10 @@ class CarSchemaService
      */
     protected function getMultiSelectOptions(string $column): array
     {
-        // Common car features
-        $commonFeatures = [
-            'Air Conditioning',
-            'Power Steering',
-            'Power Windows',
-            'Central Locking',
-            'Music System',
-            'Bluetooth',
-            'USB Port',
-            'Navigation System',
-            'Sunroof',
-            'Alloy Wheels',
-            'Fog Lights',
-            'Rear Camera',
-            'Parking Sensors',
-        ];
-
-        $safetyFeatures = [
-            'ABS',
-            'EBD',
-            'Airbags',
-            'Traction Control',
-            'Stability Control',
-            'Hill Assist',
-            'Tire Pressure Monitor',
-            'ISOFIX',
-            'Reverse Camera',
-            'Parking Sensors',
-        ];
-
+        // Load features dynamically from database
         return match($column) {
-            'features' => $commonFeatures,
-            'safety_features' => $safetyFeatures,
+            'features' => Feature::getActive()->pluck('name')->toArray(),
+            'safety_features' => SafetyFeature::getActive()->pluck('name')->toArray(),
             default => [],
         };
     }

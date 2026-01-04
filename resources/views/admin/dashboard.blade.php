@@ -77,11 +77,16 @@
                 @foreach($pendingCars as $car)
                 <tr>
                     <td>
-                        @if($car->getFirstMediaUrl('images'))
-                            <img src="{{ $car->getFirstMediaUrl('images') }}" alt="{{ $car->title }}" 
-                                 style="width: 60px; height: 40px; object-fit: cover; border-radius: 4px;">
+                        @php
+                            $firstImage = $car->getFirstMedia('images');
+                            $imageUrl = $firstImage ? $firstImage->getUrl() : null;
+                        @endphp
+                        @if($imageUrl)
+                            <img src="{{ $imageUrl }}" alt="{{ $car->title }}" 
+                                 style="width: 60px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;"
+                                 onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'60\' height=\'40\'%3E%3Crect width=\'60\' height=\'40\' fill=\'%23ddd\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-size=\'12\'%3ENo Image%3C/text%3E%3C/svg%3E'; this.style.display='block';">
                         @else
-                            <div style="width: 60px; height: 40px; background: #ddd; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                            <div style="width: 60px; height: 40px; background: #ddd; border-radius: 4px; display: flex; align-items: center; justify-content: center; border: 1px solid #ccc;">
                                 <i class="fas fa-car" style="color: #999;"></i>
                             </div>
                         @endif
@@ -98,18 +103,22 @@
                     <td>{{ $car->created_at->format('M j, Y') }}</td>
                     <td>
                         <div style="display: flex; gap: 5px;">
+                            @if($car->status !== 'approved')
                             <form action="{{ route('admin.cars.approve', $car->id) }}" method="POST" style="display: inline;">
                                 @csrf
                                 <button type="submit" class="btn btn-primary" style="padding: 4px 8px; font-size: 12px;">
                                     Approve
                                 </button>
                             </form>
+                            @endif
+                            @if($car->status !== 'rejected')
                             <form action="{{ route('admin.cars.reject', $car->id) }}" method="POST" style="display: inline;">
                                 @csrf
                                 <button type="submit" class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;">
                                     Reject
                                 </button>
                             </form>
+                            @endif
                         </div>
                     </td>
                 </tr>
