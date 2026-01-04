@@ -108,6 +108,17 @@ Route::prefix('admin')->middleware(['auth', 'verified', \App\Http\Middleware\Adm
     Route::delete('/cities/{city}', [AdminController::class, 'deleteCity'])->name('cities.delete');
 });
 
+// Super Admin - Admin Management Routes (only for super_admin role)
+// These routes are separate from admin routes to avoid route name conflicts
+Route::prefix('admin/super-admin')->middleware(['auth', 'verified', \App\Http\Middleware\SuperAdminMiddleware::class])->name('super-admin.')->group(function () {
+    Route::get('/admins', [AdminController::class, 'admins'])->name('admins');
+    Route::get('/admins/create', [AdminController::class, 'createAdmin'])->name('admins.create');
+    Route::post('/admins', [AdminController::class, 'storeAdmin'])->name('admins.store');
+    Route::get('/admins/{admin}/edit', [AdminController::class, 'editAdmin'])->name('admins.edit');
+    Route::put('/admins/{admin}', [AdminController::class, 'updateAdmin'])->name('admins.update');
+    Route::delete('/admins/{admin}', [AdminController::class, 'deleteAdmin'])->name('admins.delete');
+});
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

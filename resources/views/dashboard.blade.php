@@ -452,6 +452,18 @@
                         <i class="fas fa-map-marker-alt"></i> Manage Cities
                     </a>
                 </li>
+                @if(auth()->user()->isSuperAdmin())
+                <li style="border-top: 1px solid #32373c; margin-top: 10px; padding-top: 10px;">
+                    <a href="{{ route('super-admin.admins') }}" class="{{ request()->routeIs('super-admin.*') ? 'active' : '' }}" style="color: #ffd700; font-weight: bold;">
+                        <i class="fas fa-crown"></i> Super Admin
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('super-admin.admins') }}" class="{{ request()->routeIs('super-admin.admins*') ? 'active' : '' }}">
+                        <i class="fas fa-user-shield"></i> Manage Admins
+                    </a>
+                </li>
+                @endif
                 <li>
                     <a href="{{ url('/y') }}" target="_blank">
                         <i class="fas fa-cog"></i> Filament Panel
@@ -500,6 +512,9 @@
                         @elseif($section === 'admin-cities') Manage Cities
                         @elseif($section === 'admin-city-create') Create City
                         @elseif($section === 'admin-city-edit') Edit City
+                        @elseif($section === 'super-admin-admins') Manage Admins
+                        @elseif($section === 'super-admin-admin-create') Create Admin
+                        @elseif($section === 'super-admin-admin-edit') Edit Admin
                         @else Dashboard
                         @endif
                     @else
@@ -577,6 +592,12 @@
                     @include('admin.city-create')
                 @elseif($section === 'admin-city-edit')
                     @include('admin.city-edit')
+                @elseif($section === 'super-admin-admins')
+                    @include('super-admin.admins')
+                @elseif($section === 'super-admin-admin-create')
+                    @include('super-admin.admin-create')
+                @elseif($section === 'super-admin-admin-edit')
+                    @include('super-admin.admin-edit')
                 @endif
             @else
                 @include('dashboard.sections.overview')

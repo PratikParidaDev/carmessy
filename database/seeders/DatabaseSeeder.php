@@ -16,7 +16,8 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             CitySeeder::class,
-            AdminSeeder::class, // Admin must be seeded first
+            SuperAdminSeeder::class, // Super Admin must be seeded first
+            AdminSeeder::class, // Admin must be seeded second
             UserSeeder::class,
             MakeSeeder::class,
             ModelSeeder::class,
