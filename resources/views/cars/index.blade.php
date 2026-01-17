@@ -3,6 +3,7 @@
 @section('content')
 <div class="container-fluid py-4">
     <div class="container">
+        
         <!-- Breadcrumb -->
         <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb">
@@ -250,7 +251,11 @@
                                             <div class="position-relative">
                                                 @php
                                                     $firstMedia = $car->getFirstMedia('images');
-                                                    $image = $firstMedia ? $firstMedia->getUrl() : 'https://via.placeholder.com/400x300?text=No+Image';
+                                                    if ($firstMedia) {
+                                                        $image = asset('storage/' . $firstMedia->id . '/' . $firstMedia->file_name);
+                                                    } else {
+                                                        $image = 'https://via.placeholder.com/400x300?text=No+Image';
+                                                    }
                                                 @endphp
                                                 <img src="{{ $image }}" class="img-fluid rounded-start car-listing-image" alt="{{ $car->title }}" style="height: 250px; width: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300?text=No+Image';">
                                                 @if($car->is_featured)

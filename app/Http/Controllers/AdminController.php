@@ -276,6 +276,11 @@ class AdminController extends Controller
             'published_at' => now(),
         ]);
 
+        // Clear cache
+        \Illuminate\Support\Facades\Cache::forget("car:show:{$car->id}");
+        \Illuminate\Support\Facades\Cache::forget('homepage:data');
+        \App\Services\RedisService::clearCarCache($car->id);
+
         // Broadcast status update for real-time updates
         event(new \App\Events\CarStatusUpdated($car->fresh()));
 
@@ -297,6 +302,11 @@ class AdminController extends Controller
             'status' => 'rejected',
             'published_at' => null, // Clear published_at when rejected
         ]);
+
+        // Clear cache
+        \Illuminate\Support\Facades\Cache::forget("car:show:{$car->id}");
+        \Illuminate\Support\Facades\Cache::forget('homepage:data');
+        \App\Services\RedisService::clearCarCache($car->id);
 
         // Broadcast status update for real-time updates
         event(new \App\Events\CarStatusUpdated($car->fresh()));

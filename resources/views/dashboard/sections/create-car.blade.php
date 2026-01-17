@@ -266,3 +266,66 @@
 </script>
 
 <script src="{{ asset('js/car-form-validation.js') }}"></script>
+
+<!-- CKEditor for Description Field -->
+<script src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function initCKEditor() {
+        const textarea = document.getElementById('ckeditor-description');
+        
+        if (!textarea) {
+            setTimeout(initCKEditor, 100);
+            return;
+        }
+        
+        if (textarea.dataset.ckeditorInitialized === 'true') {
+            return;
+        }
+        
+        if (typeof ClassicEditor === 'undefined') {
+            setTimeout(initCKEditor, 100);
+            return;
+        }
+        
+        ClassicEditor
+            .create(textarea, {
+                toolbar: {
+                    items: [
+                        'heading', '|',
+                        'bold', 'italic', 'underline', 'strikethrough', '|',
+                        'bulletedList', 'numberedList', '|',
+                        'blockQuote', 'link', '|',
+                        'undo', 'redo'
+                    ]
+                },
+                heading: {
+                    options: [
+                        { model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph' },
+                        { model: 'heading1', view: 'h1', title: 'Heading 1', class: 'ck-heading_heading1' },
+                        { model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' },
+                        { model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' }
+                    ]
+                },
+                placeholder: 'Enter car description...',
+                removePlugins: ['EasyImage', 'Image', 'ImageCaption', 'ImageStyle', 'ImageToolbar', 'ImageUpload', 'ImageResize', 'CKFinder', 'CKFinderUploadAdapter']
+            })
+            .then(editor => {
+                textarea.dataset.ckeditorInitialized = 'true';
+                window.ckEditorInstance = editor;
+                
+                const form = document.getElementById('car-form');
+                if (form) {
+                    form.addEventListener('submit', function() {
+                        textarea.value = editor.getData();
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error initializing CKEditor:', error);
+            });
+    }
+    
+    setTimeout(initCKEditor, 300);
+});
+</script>
