@@ -8,6 +8,8 @@ use App\Models\Make;
 use App\Models\CarModel;
 use App\Models\City;
 use App\Services\CarSearchService;
+use App\Services\RedisService;
+use Illuminate\Support\Facades\Cache;
 
 
 class CarController extends Controller
@@ -44,8 +46,14 @@ class CarController extends Controller
                 ->paginate(20);
         }
 
-        $makes = Make::where('is_active', true)->orderBy('name')->get();
-        $cities = City::where('is_active', true)->orderBy('name')->get();
+        // Cache makes and cities (they don't change often)
+        $makes = Cache::remember('makes:active', 3600, function () {
+            return Make::where('is_active', true)->orderBy('name')->get();
+        });
+        
+        $cities = Cache::remember('cities:active', 3600, function () {
+            return City::where('is_active', true)->orderBy('name')->get();
+        });
 
         return view('cars.index', compact('cars', 'makes', 'cities'));
     }
@@ -55,20 +63,38 @@ class CarController extends Controller
         abort_if($car->status !== 'approved', 404);
         abort_if(!$car->published_at || $car->published_at->isFuture(), 404);
 
-        $car->load(['make', 'model', 'city', 'dealer.city', 'media']);
-        $car->incrementViews();
+        // Try to get from cache
+        $cacheKey = "car:show:{$car->id}";
+        $cached = Cache::get($cacheKey);
+        
+        if ($cached) {
+            $car = $cached['car'];
+            $similarCars = $cached['similarCars'];
+        } else {
+            $car->load(['make', 'model', 'city', 'dealer.city', 'media']);
+            
+            $similarCars = Car::approved()
+                ->published()
+                ->where('id', '!=', $car->id)
+                ->where(function ($query) use ($car) {
+                    $query->where('make_id', $car->make_id)
+                          ->orWhere('model_id', $car->model_id)
+                          ->orWhereBetween('price', [$car->price * 0.8, $car->price * 1.2]);
+                })
+                ->with(['make', 'model', 'city', 'media'])
+                ->limit(6)
+                ->get();
+            
+            // Cache for 30 minutes
+            Cache::put($cacheKey, [
+                'car' => $car,
+                'similarCars' => $similarCars
+            ], 1800);
+        }
 
-        $similarCars = Car::approved()
-            ->published()
-            ->where('id', '!=', $car->id)
-            ->where(function ($query) use ($car) {
-                $query->where('make_id', $car->make_id)
-                      ->orWhere('model_id', $car->model_id)
-                      ->orWhereBetween('price', [$car->price * 0.8, $car->price * 1.2]);
-            })
-            ->with(['make', 'model', 'city', 'media'])
-            ->limit(6)
-            ->get();
+        // Increment views in Redis
+        RedisService::incrementCarViews($car->id);
+        $car->incrementViews();
 
         return view('cars.show', compact('car', 'similarCars'));
     }

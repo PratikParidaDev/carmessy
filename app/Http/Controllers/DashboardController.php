@@ -6,8 +6,10 @@ use App\Models\Car;
 use App\Models\Make;
 use App\Models\City;
 use App\Services\CarSchemaService;
+use App\Services\RedisService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
 {
@@ -243,6 +245,9 @@ class DashboardController extends Controller
 
             DB::commit();
 
+            // Clear homepage cache when new car is created
+            Cache::forget('homepage:data');
+
             $successMessage = 'Car listing created successfully and is pending approval';
             if ($roleChanged) {
                 $successMessage .= '. Your account has been automatically upgraded from Buyer to Dealer!';
@@ -358,6 +363,11 @@ class DashboardController extends Controller
 
             DB::commit();
 
+            // Clear cache
+            Cache::forget("car:show:{$car->id}");
+            Cache::forget('homepage:data');
+            RedisService::clearCarCache($car->id);
+
             $message = $car->status === 'pending' 
                 ? 'Car listing updated successfully. Status reset to pending for admin review.'
                 : 'Car listing updated successfully';
@@ -381,7 +391,14 @@ class DashboardController extends Controller
             }
         }
 
+        $carId = $car->id;
+
         $car->delete();
+
+        // Clear cache
+        Cache::forget("car:show:{$carId}");
+        Cache::forget('homepage:data');
+        RedisService::clearCarCache($carId);
 
         return redirect()->route('dashboard.my-cars')
             ->with('success', 'Car listing deleted successfully');

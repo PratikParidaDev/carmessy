@@ -46,7 +46,10 @@
                 @foreach($existingMedia as $index => $media)
                 <div class="wp-image-item" data-media-id="{{ $media->id }}">
                     <div class="wp-image-preview">
-                        <img src="{{ $media->getUrl() }}" alt="Car Image">
+                        @php
+                            $imageUrl = asset('storage/' . $media->id . '/' . $media->file_name);
+                        @endphp
+                        <img src="{{ $imageUrl }}" alt="Car Image" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'150\' height=\'150\'%3E%3Crect width=\'150\' height=\'150\' fill=\'%23ddd\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-size=\'14\'%3ENo Image%3C/text%3E%3C/svg%3E';">
                         <div class="wp-image-overlay">
                             <button type="button" class="wp-image-delete" data-media-id="{{ $media->id }}" title="Delete">
                                 <i class="fas fa-times"></i>

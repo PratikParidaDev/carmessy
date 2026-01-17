@@ -128,7 +128,11 @@
                         <td>
                             @php
                                 $firstImage = $car->getFirstMedia('images');
-                                $imageUrl = $firstImage ? $firstImage->getUrl() : null;
+                                if ($firstImage) {
+                                    $imageUrl = asset('storage/' . $firstImage->id . '/' . $firstImage->file_name);
+                                } else {
+                                    $imageUrl = null;
+                                }
                             @endphp
                             @if($imageUrl)
                                 <img src="{{ $imageUrl }}" 
