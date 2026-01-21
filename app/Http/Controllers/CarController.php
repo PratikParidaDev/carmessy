@@ -8,7 +8,6 @@ use App\Models\Make;
 use App\Models\CarModel;
 use App\Models\City;
 use App\Services\CarSearchService;
-use App\Services\RedisService;
 use Illuminate\Support\Facades\Cache;
 
 
@@ -92,8 +91,7 @@ class CarController extends Controller
             ], 1800);
         }
 
-        // Increment views in Redis
-        RedisService::incrementCarViews($car->id);
+        // Increment views in database
         $car->incrementViews();
 
         return view('cars.show', compact('car', 'similarCars'));

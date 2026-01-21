@@ -13,7 +13,6 @@
         "laravel/scout": "*",
         "laravel/tinker": "^2.10.1",
         "meilisearch/meilisearch-php": "*",
-        "predis/predis": "^3.2",
         "spatie/laravel-medialibrary": "*"
     },
     "require-dev": {

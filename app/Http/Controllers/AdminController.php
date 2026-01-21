@@ -279,8 +279,6 @@ class AdminController extends Controller
         // Clear cache
         \Illuminate\Support\Facades\Cache::forget("car:show:{$car->id}");
         \Illuminate\Support\Facades\Cache::forget('homepage:data');
-        \App\Services\RedisService::clearCarCache($car->id);
-
         // Broadcast status update for real-time updates
         event(new \App\Events\CarStatusUpdated($car->fresh()));
 
@@ -306,8 +304,6 @@ class AdminController extends Controller
         // Clear cache
         \Illuminate\Support\Facades\Cache::forget("car:show:{$car->id}");
         \Illuminate\Support\Facades\Cache::forget('homepage:data');
-        \App\Services\RedisService::clearCarCache($car->id);
-
         // Broadcast status update for real-time updates
         event(new \App\Events\CarStatusUpdated($car->fresh()));
 

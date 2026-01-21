@@ -6,7 +6,6 @@ use App\Models\Car;
 use App\Models\Make;
 use App\Models\City;
 use App\Services\CarSchemaService;
-use App\Services\RedisService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -366,8 +365,6 @@ class DashboardController extends Controller
             // Clear cache
             Cache::forget("car:show:{$car->id}");
             Cache::forget('homepage:data');
-            RedisService::clearCarCache($car->id);
-
             $message = $car->status === 'pending' 
                 ? 'Car listing updated successfully. Status reset to pending for admin review.'
                 : 'Car listing updated successfully';
@@ -398,7 +395,6 @@ class DashboardController extends Controller
         // Clear cache
         Cache::forget("car:show:{$carId}");
         Cache::forget('homepage:data');
-        RedisService::clearCarCache($carId);
 
         return redirect()->route('dashboard.my-cars')
             ->with('success', 'Car listing deleted successfully');
