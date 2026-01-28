@@ -1,0 +1,133 @@
+image: php:8.4-fpm
+
+stages:
+  - test
+  - build
+  - deploy
+
+variables:
+  PHP_VERSION: "8.4"
+  MYSQL_ROOT_PASSWORD: "password"
+  MYSQL_DATABASE: "testing"
+
+cache:
+  paths:
+    - vendor/
+    - public/build/
+
+before_script:
+  - apt-get update -qq && apt-get install -y -qq git curl libpng-dev libonig-dev libxml2-dev zip unzip
+  - docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+  - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+  - cp .env.example .env
+  - php artisan key:generate
+
+test:
+  stage: test
+  services:
+    - mysql:8.0
+  variables:
+    DB_CONNECTION: mysql
+    DB_HOST: mysql
+    DB_PORT: 3306
+    DB_DATABASE: testing
+    DB_USERNAME: root
+    DB_PASSWORD: password
+  script:
+    - composer install --prefer-dist --no-interaction --optimize-autoloader
+    - vendor/bin/pint --test
+    - php artisan test
+  coverage: '/^\s*Lines:\s*\d+.\d+\%/'
+  artifacts:
+    reports:
+      junit: tests/results.xml
+    paths:
+      - coverage/
+    expire_in: 1 week
+  only:
+    - merge_requests
+    - main
+    - master
+    - develop
+
+build:
+  stage: build
+  script:
+    - composer install --prefer-dist --no-interaction --optimize-autoloader --no-dev
+    - php artisan config:cache
+    - php artisan route:cache
+    - php artisan view:cache
+  artifacts:
+    paths:
+      - vendor/
+      - public/build/
+      - bootstrap/cache/
+    expire_in: 1 hour
+  only:
+    - main
+    - master
+    - production
+  when: on_success
+
+deploy_staging:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client rsync
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts
+  script:
+    - |
+      ssh $SSH_USER@$SSH_HOST << 'EOF'
+        cd $DEPLOY_PATH_STAGING
+        git pull origin develop
+        composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+        php artisan migrate --force
+        php artisan config:cache
+        php artisan route:cache
+        php artisan view:cache
+        php artisan queue:restart
+      EOF
+  environment:
+    name: staging
+    url: $STAGING_URL
+  only:
+    - develop
+  when: manual
+
+deploy_production:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client rsync
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts
+  script:
+    - |
+      ssh $SSH_USER@$SSH_HOST << 'EOF'
+        cd $DEPLOY_PATH_PRODUCTION
+        git pull origin main
+        composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+        php artisan migrate --force
+        php artisan config:cache
+        php artisan route:cache
+        php artisan view:cache
+        php artisan event:cache
+        php artisan queue:restart
+        sudo systemctl reload php8.4-fpm || sudo systemctl reload php-fpm || true
+      EOF
+  environment:
+    name: production
+    url: $PRODUCTION_URL
+  only:
+    - main
+    - master
+    - production
+  when: manual
+
