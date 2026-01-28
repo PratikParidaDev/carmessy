@@ -1,3 +1,15 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Prevent Tailwind from hiding Bootstrap navbar elements */
+@layer base {
+    .navbar,
+    .navbar-nav,
+    .navbar-nav .nav-item,
+    .navbar-nav .nav-link {
+        display: revert !important;
+        visibility: revert !important;
+        opacity: revert !important;
+    }
+}
