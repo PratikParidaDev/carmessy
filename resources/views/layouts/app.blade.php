@@ -21,6 +21,190 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
     
+    <!-- Fix for Tailwind CSS conflicts with Bootstrap Navbar -->
+    <style>
+        /* Reset any Tailwind base styles that might hide navbar */
+        nav.navbar,
+        nav.navbar * {
+            box-sizing: border-box;
+        }
+        
+        /* Ensure navbar container is visible */
+        .navbar {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            position: relative !important;
+            z-index: 1030 !important;
+            background-color: #fff !important;
+        }
+        
+        /* Ensure navbar brand is visible */
+        .navbar-brand {
+            display: inline-block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            color: #f4883b !important;
+        }
+        
+        /* Hide hamburger menu on desktop, show on mobile */
+        .navbar-toggler {
+            display: none !important;
+            visibility: hidden !important;
+        }
+        
+        @media (max-width: 991px) {
+            .navbar-toggler {
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+        }
+        
+        /* Ensure navbar collapse container is visible */
+        .navbar-collapse {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            flex-basis: auto !important;
+        }
+        
+        /* Ensure navbar nav is visible */
+        .navbar-nav {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            flex-direction: row !important;
+            list-style: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        /* Ensure nav items are visible */
+        .navbar-nav .nav-item {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            list-style: none !important;
+        }
+        
+        /* Ensure nav links are visible */
+        .navbar-nav .nav-link {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            color: #333 !important;
+            padding: 0.5rem 1rem !important;
+            text-decoration: none !important;
+        }
+        
+        .navbar-nav .nav-link:hover {
+            color: #f4883b !important;
+        }
+        
+        /* Ensure buttons in navbar are visible */
+        .navbar .d-flex,
+        .navbar .btn {
+            display: inline-block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        /* Desktop: Always show menu */
+        @media (min-width: 992px) {
+            .navbar-collapse {
+                display: flex !important;
+                visibility: visible !important;
+            }
+            .navbar-nav {
+                display: flex !important;
+                flex-direction: row !important;
+            }
+        }
+        
+        /* Mobile: Show/hide based on Bootstrap collapse */
+        @media (max-width: 991px) {
+            .navbar-collapse.collapse:not(.show) {
+                display: none !important;
+            }
+            .navbar-collapse.collapse.show {
+                display: block !important;
+            }
+        }
+    </style>
+    
+    <!-- Ensure navbar is visible - Fix CSS conflicts -->
+    <style>
+        /* Override any Tailwind or conflicting styles */
+        .navbar {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            position: relative !important;
+            z-index: 1030 !important;
+        }
+        
+        .navbar-nav {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            flex-direction: row !important;
+        }
+        
+        .navbar-nav .nav-item {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        .navbar-nav .nav-link {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            color: #333 !important;
+        }
+        
+        .navbar-collapse {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        /* Ensure menu is visible on desktop */
+        @media (min-width: 992px) {
+            .navbar-collapse {
+                display: flex !important;
+                visibility: visible !important;
+            }
+            .navbar-nav {
+                display: flex !important;
+                flex-direction: row !important;
+            }
+        }
+        
+        /* Mobile menu toggle */
+        @media (max-width: 991px) {
+            .navbar-collapse.collapse:not(.show) {
+                display: none !important;
+            }
+            .navbar-collapse.collapse.show {
+                display: block !important;
+            }
+        }
+        
+        /* Ensure buttons are visible */
+        .navbar .d-flex {
+            display: flex !important;
+            visibility: visible !important;
+        }
+        
+        .navbar .btn {
+            display: inline-block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+    </style>
+    
  
 </head>
 <body>
@@ -164,6 +348,24 @@
 
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Ensure Bootstrap initializes -->
+    <script>
+        // Initialize Bootstrap tooltips and popovers if needed
+        document.addEventListener('DOMContentLoaded', function() {
+            // Bootstrap is already initialized via CDN
+            // This ensures menu toggle works
+            var navbarToggler = document.querySelector('.navbar-toggler');
+            var navbarCollapse = document.querySelector('.navbar-collapse');
+            
+            if (navbarToggler && navbarCollapse) {
+                navbarToggler.addEventListener('click', function() {
+                    navbarCollapse.classList.toggle('show');
+                });
+            }
+        });
+    </script>
+    
     @stack('scripts')
 </body>
 </html>
