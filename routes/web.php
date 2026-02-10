@@ -8,7 +8,9 @@ use App\Http\Controllers\{
     FavoriteController,
     AlertController,
     InquiryController,
-    DealerController
+    DealerController,
+    BookingController,
+    ContactController
 };
 
 use App\Http\Controllers\Dealer\{
@@ -23,7 +25,11 @@ use App\Http\Controllers\Api\CarStatusController;
 
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('home.welcome');
+
+// Contact Routes
+Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');
+Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
 // Unified Dashboard Routes
 Route::prefix('dashboard')->middleware(['auth', 'verified'])->group(function () {
@@ -32,6 +38,9 @@ Route::prefix('dashboard')->middleware(['auth', 'verified'])->group(function () 
     
     // Profile route
     Route::get('/profile', [DashboardController::class, 'profile'])->name('dashboard.profile');
+    
+    // Bookings route - accessible to all authenticated users
+    Route::get('/bookings', [DashboardController::class, 'myBookings'])->name('dashboard.bookings');
     
     // CRUD routes - only for dealers and admins (permission checked in controller)
     Route::get('/my-cars', [DashboardController::class, 'myCars'])->name('dashboard.my-cars');
@@ -106,6 +115,50 @@ Route::prefix('admin')->middleware(['auth', 'verified', \App\Http\Middleware\Adm
     Route::get('/cities/{city}/edit', [AdminController::class, 'editCity'])->name('cities.edit');
     Route::put('/cities/{city}', [AdminController::class, 'updateCity'])->name('cities.update');
     Route::delete('/cities/{city}', [AdminController::class, 'deleteCity'])->name('cities.delete');
+    
+    // Time Slots Management Routes
+    Route::get('/time-slots', [AdminController::class, 'timeSlots'])->name('time-slots');
+    Route::get('/time-slots/create', [AdminController::class, 'createTimeSlot'])->name('time-slots.create');
+    Route::post('/time-slots', [AdminController::class, 'storeTimeSlot'])->name('time-slots.store');
+    Route::get('/time-slots/{timeSlot}/edit', [AdminController::class, 'editTimeSlot'])->name('time-slots.edit');
+    Route::put('/time-slots/{timeSlot}', [AdminController::class, 'updateTimeSlot'])->name('time-slots.update');
+    Route::delete('/time-slots/{timeSlot}', [AdminController::class, 'deleteTimeSlot'])->name('time-slots.delete');
+    
+    // Pickup Types Management Routes
+    Route::get('/pickup-types', [AdminController::class, 'pickupTypes'])->name('pickup-types');
+    Route::get('/pickup-types/create', [AdminController::class, 'createPickupType'])->name('pickup-types.create');
+    Route::post('/pickup-types', [AdminController::class, 'storePickupType'])->name('pickup-types.store');
+    Route::get('/pickup-types/{pickupType}/edit', [AdminController::class, 'editPickupType'])->name('pickup-types.edit');
+    Route::put('/pickup-types/{pickupType}', [AdminController::class, 'updatePickupType'])->name('pickup-types.update');
+    Route::delete('/pickup-types/{pickupType}', [AdminController::class, 'deletePickupType'])->name('pickup-types.delete');
+    
+    // Payment Modes Management Routes
+    Route::get('/payment-modes', [AdminController::class, 'paymentModes'])->name('payment-modes');
+    Route::get('/payment-modes/create', [AdminController::class, 'createPaymentMode'])->name('payment-modes.create');
+    Route::post('/payment-modes', [AdminController::class, 'storePaymentMode'])->name('payment-modes.store');
+    Route::get('/payment-modes/{paymentMode}/edit', [AdminController::class, 'editPaymentMode'])->name('payment-modes.edit');
+    Route::put('/payment-modes/{paymentMode}', [AdminController::class, 'updatePaymentMode'])->name('payment-modes.update');
+    Route::delete('/payment-modes/{paymentMode}', [AdminController::class, 'deletePaymentMode'])->name('payment-modes.delete');
+    
+    // ID Proof Types Management Routes
+    Route::get('/id-proof-types', [AdminController::class, 'idProofTypes'])->name('id-proof-types');
+    Route::get('/id-proof-types/create', [AdminController::class, 'createIdProofType'])->name('id-proof-types.create');
+    Route::post('/id-proof-types', [AdminController::class, 'storeIdProofType'])->name('id-proof-types.store');
+    Route::get('/id-proof-types/{idProofType}/edit', [AdminController::class, 'editIdProofType'])->name('id-proof-types.edit');
+    Route::put('/id-proof-types/{idProofType}', [AdminController::class, 'updateIdProofType'])->name('id-proof-types.update');
+    Route::delete('/id-proof-types/{idProofType}', [AdminController::class, 'deleteIdProofType'])->name('id-proof-types.delete');
+    
+    // Bookings Management Routes
+    Route::get('/bookings', [AdminController::class, 'bookings'])->name('bookings');
+    Route::post('/bookings/{booking}/update-status', [AdminController::class, 'updateBookingStatus'])->name('bookings.update-status');
+    
+    // Time Slots Management Routes
+    Route::get('/time-slots', [AdminController::class, 'timeSlots'])->name('time-slots');
+    Route::get('/time-slots/create', [AdminController::class, 'createTimeSlot'])->name('time-slots.create');
+    Route::post('/time-slots', [AdminController::class, 'storeTimeSlot'])->name('time-slots.store');
+    Route::get('/time-slots/{timeSlot}/edit', [AdminController::class, 'editTimeSlot'])->name('time-slots.edit');
+    Route::put('/time-slots/{timeSlot}', [AdminController::class, 'updateTimeSlot'])->name('time-slots.update');
+    Route::delete('/time-slots/{timeSlot}', [AdminController::class, 'deleteTimeSlot'])->name('time-slots.delete');
 });
 
 // Super Admin - Admin Management Routes (only for super_admin role)
@@ -126,6 +179,7 @@ Route::middleware('auth')->group(function () {
     
     // API Routes for real-time updates
     Route::get('/api/cars/status-updates', [CarStatusController::class, 'getStatusUpdates'])->name('api.cars.status-updates');
+    Route::get('/api/bookings/status-updates', [\App\Http\Controllers\Api\BookingStatusController::class, 'getStatusUpdates'])->name('api.bookings.status-updates');
 });
 
 
@@ -159,7 +213,14 @@ Route::middleware('auth')->group(function () {
     // Alerts
     Route::resource('alerts', AlertController::class)->except(['show', 'edit', 'update']);
     Route::post('/alerts/{alert}/toggle', [AlertController::class, 'toggle'])->name('alerts.toggle');
+
+    // Bookings
+    Route::get('/bookings/my-bookings', [BookingController::class, 'myBookings'])->name('bookings.my-bookings');
+    Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
 });
+
+// Booking routes (public access but redirects to login if not authenticated)
+Route::get('/book/{vehicle}/{id}', [BookingController::class, 'create'])->name('bookings.create');
 
 
 // Dealer Routes

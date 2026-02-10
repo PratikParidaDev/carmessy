@@ -336,6 +336,25 @@
                         </button>
                     </form>
 
+                    <!-- Book Now Button -->
+                    <div class="mt-6 pt-6 border-t">
+                        @auth
+                            <a href="{{ route('bookings.create', ['vehicle' => 'car', 'id' => $car->id]) }}" class="flex items-center justify-center w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-6 py-3 rounded-lg font-semibold transition shadow-lg mb-3">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                Book Now
+                            </a>
+                        @else
+                            <button type="button" onclick="showLoginModal()" class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-6 py-3 rounded-lg font-semibold transition shadow-lg mb-3">
+                                <svg class="w-5 h-5 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                Book Now
+                            </button>
+                        @endauth
+                    </div>
+
                     <!-- Quick Contact Buttons -->
                     <div class="mt-6 space-y-3 pt-6 border-t">
                         <a href="tel:{{ $car->dealer->phone }}" class="flex items-center justify-center w-full bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-3 rounded-lg font-semibold transition">
@@ -560,6 +579,13 @@ document.addEventListener('keydown', function(e) {
         changeMainImage(currentImageIndex, images[currentImageIndex]);
     }
 });
+
+// Login modal for booking
+function showLoginModal() {
+    if (confirm('Please login or register to book this vehicle.')) {
+        window.location.href = '{{ route("login") }}';
+    }
+}
 </script>
 @endpush
 @endsection

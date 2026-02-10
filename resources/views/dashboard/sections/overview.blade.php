@@ -23,6 +23,86 @@
 </div>
 @endif
 
+@if(isset($bookingStats))
+<div class="stats-grid" style="margin-top: 20px;">
+    <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <h3 style="color: white;">Total Bookings</h3>
+        <div class="stat-value" style="color: white;">{{ $bookingStats['total_bookings'] }}</div>
+    </div>
+    <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+        <h3 style="color: white;">Pending</h3>
+        <div class="stat-value" style="color: white;">{{ $bookingStats['pending_bookings'] }}</div>
+    </div>
+    <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+        <h3 style="color: white;">Confirmed</h3>
+        <div class="stat-value" style="color: white;">{{ $bookingStats['confirmed_bookings'] }}</div>
+    </div>
+    <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+        <h3 style="color: white;">Completed</h3>
+        <div class="stat-value" style="color: white;">{{ $bookingStats['completed_bookings'] }}</div>
+    </div>
+</div>
+@endif
+
+@if(isset($bookings) && $bookings->count() > 0)
+<div class="dashboard-card" style="margin-top: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; font-size: 18px;">Recent Bookings</h2>
+        <a href="{{ route('dashboard.bookings') }}" class="btn btn-primary" style="padding: 6px 12px; font-size: 13px;">
+            View All <i class="fas fa-arrow-right ms-1"></i>
+        </a>
+    </div>
+    <div style="overflow-x: auto;">
+        <table class="table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">Vehicle</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">Booking Date</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">Time Slot</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">Status</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($bookings as $booking)
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 10px;">
+                        @if($booking->vehicle_type === 'car' && $booking->vehicle)
+                            <strong>{{ $booking->vehicle->make->name }} {{ $booking->vehicle->model->name }}</strong>
+                        @else
+                            Vehicle #{{ $booking->vehicle_id }}
+                        @endif
+                    </td>
+                    <td style="padding: 10px;">{{ $booking->preferred_booking_date->format('d M Y') }}</td>
+                    <td style="padding: 10px;">{{ $booking->preferred_time_slot }}</td>
+                    <td style="padding: 10px;">
+                        @if($booking->status === 'pending')
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        @elseif($booking->status === 'confirmed')
+                            <span class="badge bg-success">Confirmed</span>
+                        @elseif($booking->status === 'cancelled')
+                            <span class="badge bg-danger">Cancelled</span>
+                        @elseif($booking->status === 'completed')
+                            <span class="badge bg-info">Completed</span>
+                        @endif
+                    </td>
+                    <td style="padding: 10px;">
+                        @if($booking->vehicle_type === 'car' && $booking->vehicle)
+                            <a href="{{ route('cars.show', $booking->vehicle->slug) }}" 
+                               class="btn btn-sm btn-outline-primary" 
+                               style="padding: 4px 8px; font-size: 12px;">
+                                View Vehicle
+                            </a>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+@endif
+
 <div class="dashboard-card">
     <h2>Welcome to Your Dashboard</h2>
     <p>You're logged in as <strong>{{ auth()->user()->name }}</strong> ({{ ucfirst(auth()->user()->role) }})</p>

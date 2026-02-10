@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Car;
 use App\Models\Make;
 use App\Models\City;
+use App\Models\Booking;
 use App\Services\CarSchemaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -81,11 +82,27 @@ class DashboardController extends Controller
             $listingFields = $this->schemaService->getListingFields();
         }
 
+        // Get user's bookings for all users
+        $bookings = Booking::where('user_id', $user->id)
+            ->with(['vehicle.make', 'vehicle.model', 'vehicle.city'])
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        $bookingStats = [
+            'total_bookings' => Booking::where('user_id', $user->id)->count(),
+            'pending_bookings' => Booking::where('user_id', $user->id)->where('status', 'pending')->count(),
+            'confirmed_bookings' => Booking::where('user_id', $user->id)->where('status', 'confirmed')->count(),
+            'completed_bookings' => Booking::where('user_id', $user->id)->where('status', 'completed')->count(),
+        ];
+
         return view('dashboard', [
             'section' => 'overview',
             'cars' => $cars,
             'stats' => $stats,
             'listingFields' => $listingFields,
+            'bookings' => $bookings,
+            'bookingStats' => $bookingStats,
         ]);
     }
 
@@ -401,6 +418,21 @@ class DashboardController extends Controller
             ->with('success', 'Car listing deleted successfully');
     }
 
+    public function myBookings()
+    {
+        $user = auth()->user();
+        
+        $bookings = Booking::where('user_id', $user->id)
+            ->with(['vehicle.make', 'vehicle.model', 'vehicle.city'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        return view('dashboard', [
+            'section' => 'my-bookings',
+            'bookings' => $bookings,
+        ]);
+    }
+
     public function profile()
     {
         $user = auth()->user();
@@ -412,6 +444,7 @@ class DashboardController extends Controller
             'favorites_count' => $user->favorites()->count(),
             'reviews_count' => $user->reviews()->count(),
             'inquiries_count' => $user->dealer ? $user->dealer->cars()->withCount('inquiries')->get()->sum('inquiries_count') : 0,
+            'bookings_count' => $user->bookings()->count(),
         ];
 
         return view('dashboard', [
