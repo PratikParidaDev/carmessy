@@ -1,0 +1,130 @@
+/* Contact Page Styles */
+
+.contact-page-wrapper {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 3rem 0;
+}
+
+.contact-info-card {
+    border: none;
+    border-radius: 15px;
+    height: 100%;
+}
+
+.contact-info-body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    padding: 3rem;
+    color: white;
+}
+
+.contact-info-title {
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+}
+
+.contact-info-text {
+    opacity: 0.9;
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+}
+
+.contact-icon-box {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.contact-icon-box i {
+    font-size: 20px;
+}
+
+.contact-info-item {
+    display: flex;
+    align-items: start;
+    margin-bottom: 1.5rem;
+}
+
+.contact-info-item h5 {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.contact-info-item p {
+    opacity: 0.9;
+    margin-bottom: 0;
+}
+
+.contact-info-item a {
+    color: white;
+    text-decoration: none;
+}
+
+.contact-info-item a:hover {
+    text-decoration: underline;
+}
+
+.contact-form-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.contact-form-body {
+    padding: 3rem;
+}
+
+.contact-form-title {
+    color: #333;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+}
+
+.contact-form-subtitle {
+    color: #6c757d;
+    margin-bottom: 2rem;
+}
+
+.social-link-icon {
+    font-size: 24px;
+    opacity: 0.8;
+    transition: opacity 0.3s;
+    color: white;
+    margin-right: 0.75rem;
+    text-decoration: none;
+}
+
+.social-link-icon:hover {
+    opacity: 1;
+    color: white;
+}
+
+.contact-submit-btn {
+    padding: 12px;
+    font-weight: 600;
+    width: 100%;
+}
+
+.contact-social-title {
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 991px) {
+    .contact-page-wrapper {
+        padding: 2rem 0;
+    }
+    
+    .contact-info-body,
+    .contact-form-body {
+        padding: 2rem;
+    }
+}
+

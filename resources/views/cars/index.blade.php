@@ -324,9 +324,18 @@
                                                                 </button>
                                                             </form>
                                                         @endauth
-                                                        <a href="{{ route('cars.show', $car->slug) }}" class="btn btn-primary btn-sm">
+                                                        <a href="{{ route('cars.show', $car->slug) }}" class="btn btn-outline-primary btn-sm">
                                                             View Details <i class="fas fa-arrow-right ms-1"></i>
                                                         </a>
+                                                        @auth
+                                                            <a href="{{ route('bookings.create', ['vehicle' => 'car', 'id' => $car->id]) }}" class="btn btn-success btn-sm">
+                                                                <i class="fas fa-calendar-check me-1"></i> Book Now
+                                                            </a>
+                                                        @else
+                                                            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#loginRequiredModal{{ $car->id }}">
+                                                                <i class="fas fa-calendar-check me-1"></i> Book Now
+                                                            </button>
+                                                        @endauth
                                                     </div>
                                                 </div>
                                             </div>
@@ -390,4 +399,28 @@
     });
 </script>
 @endpush
+
+<!-- Login Required Modals -->
+@foreach($cars as $car)
+    @guest
+    <div class="modal fade" id="loginRequiredModal{{ $car->id }}" tabindex="-1" aria-labelledby="loginRequiredModalLabel{{ $car->id }}" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="loginRequiredModalLabel{{ $car->id }}">Login Required</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Please login or register to book this vehicle.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <a href="{{ route('login') }}" class="btn btn-primary">Login</a>
+                    <a href="{{ route('register') }}" class="btn btn-success">Register</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endguest
+@endforeach
 @endsection

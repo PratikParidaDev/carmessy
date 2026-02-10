@@ -11,6 +11,11 @@ use App\Models\AdminPreference;
 use App\Models\Feature;
 use App\Models\SafetyFeature;
 use App\Models\City;
+use App\Models\Booking;
+use App\Models\TimeSlot;
+use App\Models\PickupType;
+use App\Models\PaymentMode;
+use App\Models\IdProofType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -1397,6 +1402,613 @@ class AdminController extends Controller
         $admin->delete();
 
         return back()->with('success', 'Admin deleted successfully.');
+    }
+
+    /**
+     * List all bookings (admin view)
+     */
+    public function bookings(Request $request)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $query = Booking::with(['user', 'vehicle.make', 'vehicle.model', 'vehicle.city']);
+
+        // Apply filters
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('full_name', 'like', '%' . $search . '%')
+                  ->orWhere('email', 'like', '%' . $search . '%')
+                  ->orWhere('phone_number', 'like', '%' . $search . '%')
+                  ->orWhereHas('user', fn($q) => $q->where('name', 'like', '%' . $search . '%')
+                                                    ->orWhere('email', 'like', '%' . $search . '%'));
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('vehicle_type')) {
+            $query->where('vehicle_type', $request->vehicle_type);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        // Apply sorting and pagination
+        $bookings = $query->latest('created_at')->paginate(20)->withQueryString();
+
+        return view('dashboard', [
+            'section' => 'admin-bookings',
+            'bookings' => $bookings,
+        ]);
+    }
+
+    /**
+     * Update booking status
+     */
+    public function updateBookingStatus(Request $request, Booking $booking)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $request->validate([
+            'status' => 'required|in:pending,confirmed,cancelled,completed',
+        ]);
+
+        $oldStatus = $booking->status;
+        $booking->status = $request->status;
+        $booking->save();
+
+        // Clear any caches if needed
+        // You can add notification logic here if needed
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Booking status updated successfully',
+            'booking' => [
+                'id' => $booking->id,
+                'status' => $booking->status,
+                'updated_at' => $booking->updated_at->toIso8601String(),
+            ],
+        ]);
+    }
+
+    /**
+     * List all time slots (admin view)
+     */
+    public function timeSlots()
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $timeSlots = TimeSlot::orderBy('sort_order')
+            ->orderBy('start_time')
+            ->paginate(20);
+
+        return view('dashboard', [
+            'section' => 'admin-time-slots',
+            'timeSlots' => $timeSlots,
+        ]);
+    }
+
+    /**
+     * Show form to create a new time slot
+     */
+    public function createTimeSlot()
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        return view('dashboard', [
+            'section' => 'admin-time-slot-create',
+        ]);
+    }
+
+    /**
+     * Store a new time slot
+     */
+    public function storeTimeSlot(Request $request)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:time_slots,name',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
+            'sort_order' => 'nullable|integer|min:0',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        TimeSlot::create([
+            'name' => $validated['name'],
+            'start_time' => $validated['start_time'],
+            'end_time' => $validated['end_time'],
+            'sort_order' => $validated['sort_order'] ?? 0,
+            'is_active' => $request->has('is_active') ? true : false,
+        ]);
+
+        return redirect()->route('admin.time-slots')
+            ->with('success', 'Time slot created successfully.');
+    }
+
+    /**
+     * Show form to edit a time slot
+     */
+    public function editTimeSlot(TimeSlot $timeSlot)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        return view('dashboard', [
+            'section' => 'admin-time-slot-edit',
+            'timeSlot' => $timeSlot,
+        ]);
+    }
+
+    /**
+     * Update a time slot
+     */
+    public function updateTimeSlot(Request $request, TimeSlot $timeSlot)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:time_slots,name,' . $timeSlot->id,
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
+            'sort_order' => 'nullable|integer|min:0',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $timeSlot->update([
+            'name' => $validated['name'],
+            'start_time' => $validated['start_time'],
+            'end_time' => $validated['end_time'],
+            'sort_order' => $validated['sort_order'] ?? $timeSlot->sort_order,
+            'is_active' => $request->has('is_active') ? true : false,
+        ]);
+
+        return redirect()->route('admin.time-slots')
+            ->with('success', 'Time slot updated successfully.');
+    }
+
+    /**
+     * Delete a time slot
+     */
+    public function deleteTimeSlot(TimeSlot $timeSlot)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        // Check if time slot is being used in bookings
+        $bookingsCount = Booking::where('preferred_time_slot', $timeSlot->name)->count();
+        
+        if ($bookingsCount > 0) {
+            return back()->with('error', "Cannot delete time slot. It is being used in {$bookingsCount} booking(s).");
+        }
+
+        $timeSlot->delete();
+
+        return redirect()->route('admin.time-slots')
+            ->with('success', 'Time slot deleted successfully.');
+    }
+
+    /**
+     * ============================================
+     * PICKUP TYPES MANAGEMENT
+     * ============================================
+     */
+
+    public function pickupTypes()
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $pickupTypes = PickupType::orderBy('sort_order')
+            ->orderBy('name')
+            ->paginate(20);
+
+        return view('dashboard', [
+            'section' => 'admin-pickup-types',
+            'pickupTypes' => $pickupTypes,
+        ]);
+    }
+
+    public function createPickupType()
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        return view('dashboard', [
+            'section' => 'admin-pickup-type-create',
+        ]);
+    }
+
+    public function storePickupType(Request $request)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:pickup_types,name',
+            'display_name' => 'nullable|string|max:255',
+            'sort_order' => 'nullable|integer|min:0',
+            'is_active' => 'nullable|boolean',
+            'description' => 'nullable|string|max:1000',
+        ]);
+
+        PickupType::create([
+            'name' => $validated['name'],
+            'display_name' => $validated['display_name'] ?? $validated['name'],
+            'sort_order' => $validated['sort_order'] ?? 0,
+            'is_active' => $request->has('is_active') ? true : false,
+            'description' => $validated['description'] ?? null,
+        ]);
+
+        return redirect()->route('admin.pickup-types')
+            ->with('success', 'Pickup type created successfully.');
+    }
+
+    public function editPickupType(PickupType $pickupType)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        return view('dashboard', [
+            'section' => 'admin-pickup-type-edit',
+            'pickupType' => $pickupType,
+        ]);
+    }
+
+    public function updatePickupType(Request $request, PickupType $pickupType)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:pickup_types,name,' . $pickupType->id,
+            'display_name' => 'nullable|string|max:255',
+            'sort_order' => 'nullable|integer|min:0',
+            'is_active' => 'nullable|boolean',
+            'description' => 'nullable|string|max:1000',
+        ]);
+
+        $pickupType->update([
+            'name' => $validated['name'],
+            'display_name' => $validated['display_name'] ?? $validated['name'],
+            'sort_order' => $validated['sort_order'] ?? $pickupType->sort_order,
+            'is_active' => $request->has('is_active') ? true : false,
+            'description' => $validated['description'] ?? $pickupType->description,
+        ]);
+
+        return redirect()->route('admin.pickup-types')
+            ->with('success', 'Pickup type updated successfully.');
+    }
+
+    public function deletePickupType(PickupType $pickupType)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        // Check if pickup type is being used in bookings
+        $bookingsCount = Booking::where('pickup_type', $pickupType->slug)->count();
+        
+        if ($bookingsCount > 0) {
+            return back()->with('error', "Cannot delete pickup type. It is being used in {$bookingsCount} booking(s).");
+        }
+
+        $pickupType->delete();
+
+        return redirect()->route('admin.pickup-types')
+            ->with('success', 'Pickup type deleted successfully.');
+    }
+
+    /**
+     * ============================================
+     * PAYMENT MODES MANAGEMENT
+     * ============================================
+     */
+
+    public function paymentModes()
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $paymentModes = PaymentMode::orderBy('sort_order')
+            ->orderBy('name')
+            ->paginate(20);
+
+        return view('dashboard', [
+            'section' => 'admin-payment-modes',
+            'paymentModes' => $paymentModes,
+        ]);
+    }
+
+    public function createPaymentMode()
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        return view('dashboard', [
+            'section' => 'admin-payment-mode-create',
+        ]);
+    }
+
+    public function storePaymentMode(Request $request)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:payment_modes,name',
+            'display_name' => 'nullable|string|max:255',
+            'sort_order' => 'nullable|integer|min:0',
+            'is_active' => 'nullable|boolean',
+            'description' => 'nullable|string|max:1000',
+        ]);
+
+        PaymentMode::create([
+            'name' => $validated['name'],
+            'display_name' => $validated['display_name'] ?? $validated['name'],
+            'sort_order' => $validated['sort_order'] ?? 0,
+            'is_active' => $request->has('is_active') ? true : false,
+            'description' => $validated['description'] ?? null,
+        ]);
+
+        return redirect()->route('admin.payment-modes')
+            ->with('success', 'Payment mode created successfully.');
+    }
+
+    public function editPaymentMode(PaymentMode $paymentMode)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        return view('dashboard', [
+            'section' => 'admin-payment-mode-edit',
+            'paymentMode' => $paymentMode,
+        ]);
+    }
+
+    public function updatePaymentMode(Request $request, PaymentMode $paymentMode)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:payment_modes,name,' . $paymentMode->id,
+            'display_name' => 'nullable|string|max:255',
+            'sort_order' => 'nullable|integer|min:0',
+            'is_active' => 'nullable|boolean',
+            'description' => 'nullable|string|max:1000',
+        ]);
+
+        $paymentMode->update([
+            'name' => $validated['name'],
+            'display_name' => $validated['display_name'] ?? $validated['name'],
+            'sort_order' => $validated['sort_order'] ?? $paymentMode->sort_order,
+            'is_active' => $request->has('is_active') ? true : false,
+            'description' => $validated['description'] ?? $paymentMode->description,
+        ]);
+
+        return redirect()->route('admin.payment-modes')
+            ->with('success', 'Payment mode updated successfully.');
+    }
+
+    public function deletePaymentMode(PaymentMode $paymentMode)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        // Check if payment mode is being used in bookings
+        $bookingsCount = Booking::where('payment_mode', $paymentMode->slug)->count();
+        
+        if ($bookingsCount > 0) {
+            return back()->with('error', "Cannot delete payment mode. It is being used in {$bookingsCount} booking(s).");
+        }
+
+        $paymentMode->delete();
+
+        return redirect()->route('admin.payment-modes')
+            ->with('success', 'Payment mode deleted successfully.');
+    }
+
+    /**
+     * ============================================
+     * ID PROOF TYPES MANAGEMENT
+     * ============================================
+     */
+
+    public function idProofTypes()
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $idProofTypes = IdProofType::orderBy('sort_order')
+            ->orderBy('name')
+            ->paginate(20);
+
+        return view('dashboard', [
+            'section' => 'admin-id-proof-types',
+            'idProofTypes' => $idProofTypes,
+        ]);
+    }
+
+    public function createIdProofType()
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        return view('dashboard', [
+            'section' => 'admin-id-proof-type-create',
+        ]);
+    }
+
+    public function storeIdProofType(Request $request)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:id_proof_types,name',
+            'display_name' => 'nullable|string|max:255',
+            'sort_order' => 'nullable|integer|min:0',
+            'is_active' => 'nullable|boolean',
+            'description' => 'nullable|string|max:1000',
+        ]);
+
+        IdProofType::create([
+            'name' => $validated['name'],
+            'display_name' => $validated['display_name'] ?? $validated['name'],
+            'sort_order' => $validated['sort_order'] ?? 0,
+            'is_active' => $request->has('is_active') ? true : false,
+            'description' => $validated['description'] ?? null,
+        ]);
+
+        return redirect()->route('admin.id-proof-types')
+            ->with('success', 'ID Proof type created successfully.');
+    }
+
+    public function editIdProofType(IdProofType $idProofType)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        return view('dashboard', [
+            'section' => 'admin-id-proof-type-edit',
+            'idProofType' => $idProofType,
+        ]);
+    }
+
+    public function updateIdProofType(Request $request, IdProofType $idProofType)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:id_proof_types,name,' . $idProofType->id,
+            'display_name' => 'nullable|string|max:255',
+            'sort_order' => 'nullable|integer|min:0',
+            'is_active' => 'nullable|boolean',
+            'description' => 'nullable|string|max:1000',
+        ]);
+
+        $idProofType->update([
+            'name' => $validated['name'],
+            'display_name' => $validated['display_name'] ?? $validated['name'],
+            'sort_order' => $validated['sort_order'] ?? $idProofType->sort_order,
+            'is_active' => $request->has('is_active') ? true : false,
+            'description' => $validated['description'] ?? $idProofType->description,
+        ]);
+
+        return redirect()->route('admin.id-proof-types')
+            ->with('success', 'ID Proof type updated successfully.');
+    }
+
+    public function deleteIdProofType(IdProofType $idProofType)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        // Check if ID proof type is being used in bookings
+        $bookingsCount = Booking::where('id_proof_type', $idProofType->slug)->count();
+        
+        if ($bookingsCount > 0) {
+            return back()->with('error', "Cannot delete ID proof type. It is being used in {$bookingsCount} booking(s).");
+        }
+
+        $idProofType->delete();
+
+        return redirect()->route('admin.id-proof-types')
+            ->with('success', 'ID Proof type deleted successfully.');
     }
 }
 

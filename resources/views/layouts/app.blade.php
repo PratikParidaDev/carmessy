@@ -234,6 +234,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('cars.index') }}">Sell Car</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('contact.index') }}">Contact Us</a>
+                    </li>
                 </ul>
                 <div class="d-flex align-items-center">
                     @auth
@@ -242,6 +245,9 @@
                                 <i class="fas fa-tachometer-alt"></i> Dashboard
                             </a>
                         @endif
+                        <a href="{{ route('bookings.my-bookings') }}" class="btn btn-outline-success me-2">
+                            <i class="fas fa-calendar-check"></i> My Bookings
+                        </a>
                         <a href="{{ route('favorites.index') }}" class="btn btn-outline-secondary me-2">
                             <i class="fas fa-heart"></i> Favorites
                         </a>
@@ -321,7 +327,7 @@
                     <h5 class="mb-3">Support</h5>
                     <ul class="list-unstyled">
                         <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Help Center</a></li>
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Contact Us</a></li>
+                        <li class="mb-2"><a href="{{ route('contact.index') }}" class="text-muted text-decoration-none">Contact Us</a></li>
                         <li class="mb-2"><a href="#" class="text-muted text-decoration-none">FAQ</a></li>
                         <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Car Insurance</a></li>
                         <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Car Loan</a></li>

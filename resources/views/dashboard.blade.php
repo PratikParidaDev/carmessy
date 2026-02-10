@@ -401,6 +401,12 @@
                 @endif
 
                 <li>
+                    <a href="{{ route('dashboard.bookings') }}" class="{{ request()->routeIs('dashboard.bookings') ? 'active' : '' }}">
+                        <i class="fas fa-calendar-check"></i> My Bookings
+                    </a>
+                </li>
+
+                <li>
                     <a href="{{ route('dashboard.profile') }}" class="{{ request()->routeIs('dashboard.profile') ? 'active' : '' }}">
                         <i class="fas fa-user"></i> My Profile
                     </a>
@@ -420,6 +426,31 @@
                 <li>
                     <a href="{{ route('admin.cars') }}" class="{{ request()->routeIs('admin.cars*') ? 'active' : '' }}">
                         <i class="fas fa-car"></i> Manage Cars
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.bookings') }}" class="{{ request()->routeIs('admin.bookings*') ? 'active' : '' }}">
+                        <i class="fas fa-calendar-check"></i> Manage Bookings
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.time-slots') }}" class="{{ request()->routeIs('admin.time-slots*') ? 'active' : '' }}">
+                        <i class="fas fa-clock"></i> Time Slots
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.pickup-types') }}" class="{{ request()->routeIs('admin.pickup-types*') ? 'active' : '' }}">
+                        <i class="fas fa-truck"></i> Pickup Types
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.payment-modes') }}" class="{{ request()->routeIs('admin.payment-modes*') ? 'active' : '' }}">
+                        <i class="fas fa-credit-card"></i> Payment Modes
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.id-proof-types') }}" class="{{ request()->routeIs('admin.id-proof-types*') ? 'active' : '' }}">
+                        <i class="fas fa-id-card"></i> ID Proof Types
                     </a>
                 </li>
                 <li>
@@ -550,6 +581,8 @@
                     @include('dashboard.sections.profile')
                 @elseif($section === 'edit-profile')
                     @include('dashboard.sections.edit-profile')
+                @elseif($section === 'my-bookings')
+                    @include('dashboard.sections.my-bookings')
                 @elseif($section === 'admin-dashboard')
                     @include('admin.dashboard')
                 @elseif($section === 'admin-users')
@@ -574,6 +607,32 @@
                     @include('admin.model-edit')
                 @elseif($section === 'admin-color-settings')
                     @include('admin.color-settings')
+                @elseif($section === 'admin-bookings')
+                    @include('admin.bookings')
+                @elseif($section === 'admin-time-slots')
+                    @include('admin.time-slots')
+                @elseif($section === 'admin-time-slot-create')
+                    @include('admin.time-slot-create')
+                @elseif($section === 'admin-time-slot-edit')
+                    @include('admin.time-slot-edit')
+                @elseif($section === 'admin-pickup-types')
+                    @include('admin.pickup-types')
+                @elseif($section === 'admin-pickup-type-create')
+                    @include('admin.pickup-type-create')
+                @elseif($section === 'admin-pickup-type-edit')
+                    @include('admin.pickup-type-edit')
+                @elseif($section === 'admin-payment-modes')
+                    @include('admin.payment-modes')
+                @elseif($section === 'admin-payment-mode-create')
+                    @include('admin.payment-mode-create')
+                @elseif($section === 'admin-payment-mode-edit')
+                    @include('admin.payment-mode-edit')
+                @elseif($section === 'admin-id-proof-types')
+                    @include('admin.id-proof-types')
+                @elseif($section === 'admin-id-proof-type-create')
+                    @include('admin.id-proof-type-create')
+                @elseif($section === 'admin-id-proof-type-edit')
+                    @include('admin.id-proof-type-edit')
                 @elseif($section === 'admin-features')
                     @include('admin.features')
                 @elseif($section === 'admin-feature-create')
